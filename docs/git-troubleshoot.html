@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="th">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quick Start - AdaSoft Deploy Tool</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Sarabun:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800&display=swap');
+
+        body {
+            background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
+            min-height: 100vh;
+            padding: 20px;
+            font-family: 'Sarabun', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+        }
+
+        .container {
+            max-width: 900px;
+        }
+
+        .card {
+            border: none;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            margin-bottom: 20px;
+        }
+
+        .card-header {
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+            color: white;
+            border-radius: 15px 15px 0 0 !important;
+            padding: 20px;
+        }
+
+        .card-header h1 {
+            margin: 0;
+            font-size: 2rem;
+        }
+
+        .step-card {
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+
+        .step-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 40px rgba(40, 167, 69, 0.3);
+        }
+
+        .step-number {
+            display: inline-block;
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+            color: white;
+            border-radius: 50%;
+            text-align: center;
+            line-height: 40px;
+            font-weight: bold;
+            margin-right: 10px;
+        }
+
+        .btn-custom {
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+            border: none;
+            color: white;
+            padding: 12px 30px;
+            border-radius: 25px;
+            font-weight: bold;
+            transition: all 0.3s;
+        }
+
+        .btn-custom:hover {
+            transform: scale(1.05);
+            box-shadow: 0 5px 15px rgba(40, 167, 69, 0.4);
+            color: white;
+        }
+
+        .alert-custom {
+            border-left: 4px solid #28a745;
+            background: #f8f9ff;
+        }
+
+        .method-card {
+            border-left: 4px solid #28a745;
+            background: #f8f9ff;
+            padding: 20px;
+            margin-bottom: 15px;
+            border-radius: 8px;
+        }
+
+        .method-number {
+            display: inline-block;
+            width: 30px;
+            height: 30px;
+            background: #28a745;
+            color: white;
+            border-radius: 50%;
+            text-align: center;
+            line-height: 30px;
+            font-weight: bold;
+            margin-right: 10px;
+            font-size: 0.9rem;
+        }
+
+        .icon-large {
+            font-size: 3rem;
+            color: #28a745;
+            margin-bottom: 15px;
+        }
+
+        .checklist-item {
+            padding: 10px;
+            margin: 5px 0;
+            background: #f8f9fa;
+            border-radius: 5px;
+            border-left: 3px solid #28a745;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: bold;
+        }
+
+        .status-recommended {
+            background: #28a745;
+            color: white;
+        }
+
+        .status-detailed {
+            background: #1a1a1a;
+            color: white;
+        }
+
+        .status-auto {
+            background: #20c997;
+            color: white;
+        }
+
+        .back-btn {
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+            color: white;
+            padding: 10px 25px;
+            border-radius: 8px;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: 600;
+            transition: all 0.3s;
+            margin-bottom: 20px;
+            border: none;
+        }
+
+        .back-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(40, 167, 69, 0.4);
+            color: white;
+            text-decoration: none;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <a href="../index.php" class="back-btn">
+            <i class="fas fa-arrow-left"></i> กลับหน้าหลัก
+        </a>
+        <!-- Header Card -->
+        <div class="card">
+            <div class="card-header text-center">
+                <h1><i class="fas fa-rocket"></i> AdaSoft Deploy Tool</h1>
+                <p class="mb-0">คู่มือเริ่มต้นใช้งานอย่างรวดเร็ว</p>
+            </div>
+        </div>
+
+        <!-- Problem Alert -->
+        <div class="card">
+            <div class="card-body">
+                <div class="alert alert-warning mb-0">
+                    <h4><i class="fas fa-exclamation-triangle"></i> เชื่อมต่อ Git ไม่ได้?</h4>
+                    <p class="mb-0">ถ้าคุณเอา Deploy Tool ไปใช้แล้วเชื่อมต่อ Git ไม่ได้ <strong>ไม่ต้องกังวล!</strong>
+                        เรามีวิธีแก้ไข 3 วิธีให้เลือก</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- 3 Methods -->
+        <div class="card">
+            <div class="card-body">
+                <h3 class="text-center mb-4"><i class="fas fa-tools"></i> เลือกวิธีแก้ปัญหา (1 วิธีใดก็ได้)</h3>
+
+                <!-- Method 1 -->
+                <div class="method-card">
+                    <h4>
+                        <span class="method-number">1</span>
+                        <i class="fas fa-magic"></i> ใช้ Auto Fix Script
+                        <span class="status-badge status-recommended">แนะนำ</span>
+                    </h4>
+                    <p class="text-muted mb-3">ให้โปรแกรมตรวจสอบและแก้ไขปัญหาให้อัตโนมัติ (ง่ายที่สุด)</p>
+                    <ol>
+                        <li>คลิกขวาที่ไฟล์ <code>auto-fix-git.bat</code></li>
+                        <li>เลือก <strong>"Run as administrator"</strong></li>
+                        <li>ทำตามคำแนะนำบนหน้าจอ</li>
+                    </ol>
+                    <div class="alert alert-info mb-0">
+                        <i class="fas fa-info-circle"></i> Script จะตรวจสอบ Git, PATH, Apache และแก้ไขให้อัตโนมัติ
+                    </div>
+                </div>
+
+                <!-- Method 2 -->
+                <div class="method-card">
+                    <h4>
+                        <span class="method-number">2</span>
+                        <i class="fas fa-list-check"></i> ทำตาม Checklist ทีละขั้น
+                        <span class="status-badge status-detailed">ละเอียดที่สุด</span>
+                    </h4>
+                    <p class="text-muted mb-3">คู่มือแบบ step-by-step ที่อธิบายละเอียดทุกขั้นตอน</p>
+                    <a href="setup-guide.html" class="btn btn-custom" target="_blank">
+                        <i class="fas fa-book-open"></i> เปิด Setup Guide
+                    </a>
+                    <div class="alert alert-info mb-0 mt-3">
+                        <i class="fas fa-info-circle"></i> เหมาะสำหรับคนที่ต้องการเข้าใจทุกขั้นตอน
+                    </div>
+                </div>
+
+                <!-- Method 3 -->
+                <div class="method-card">
+                    <h4>
+                        <span class="method-number">3</span>
+                        <i class="fas fa-stethoscope"></i> ตรวจสอบระบบด้วย System Check
+                        <span class="status-badge status-auto">อัตโนมัติ</span>
+                    </h4>
+                    <p class="text-muted mb-3">ให้ระบบตรวจสอบและบอกว่าต้องแก้อะไรบ้าง</p>
+                    <a href="system-check.php" class="btn btn-custom" target="_blank">
+                        <i class="fas fa-play-circle"></i> เปิด System Check
+                    </a>
+                    <div class="alert alert-info mb-0 mt-3">
+                        <i class="fas fa-info-circle"></i> ตรวจสอบ Git, Config, Path และอื่นๆ อัตโนมัติ
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Checklist -->
+        <div class="card">
+            <div class="card-body">
+                <h3 class="text-center mb-4"><i class="fas fa-clipboard-check"></i> Checklist ก่อนใช้งาน</h3>
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="checklist-item">
+                            <i class="fas fa-check-circle text-success"></i> ติดตั้ง Git แล้ว
+                        </div>
+                        <div class="checklist-item">
+                            <i class="fas fa-check-circle text-success"></i> Git อยู่ใน PATH
+                        </div>
+                        <div class="checklist-item">
+                            <i class="fas fa-check-circle text-success"></i> Restart Apache แล้ว
+                        </div>
+                        <div class="checklist-item">
+                            <i class="fas fa-check-circle text-success"></i> Clone โปรเจ็คแล้ว
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="checklist-item">
+                            <i class="fas fa-check-circle text-success"></i> แก้ไข config.json แล้ว
+                        </div>
+                        <div class="checklist-item">
+                            <i class="fas fa-check-circle text-success"></i> ใช้ forward slash (/)
+                        </div>
+                        <div class="checklist-item">
+                            <i class="fas fa-check-circle text-success"></i> สร้างโฟลเดอร์ Deploy แล้ว
+                        </div>
+                        <div class="checklist-item">
+                            <i class="fas fa-check-circle text-success"></i> System Check ผ่านหมด
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Next Steps -->
+        <div class="card">
+            <div class="card-body text-center">
+                <div class="icon-large">
+                    <i class="fas fa-rocket"></i>
+                </div>
+                <h3>พร้อมใช้งานแล้ว?</h3>
+                <p class="text-muted mb-4">เมื่อแก้ปัญหาเสร็จแล้ว ก็เริ่มใช้งาน Deploy Tool ได้เลย!</p>
+                <a href="../index.php" class="btn btn-custom btn-lg">
+                    <i class="fas fa-rocket"></i> เปิด Deploy Tool
+                </a>
+            </div>
+        </div>
+
+        <!-- Help Section -->
+        <div class="card">
+            <div class="card-body">
+                <h4><i class="fas fa-question-circle"></i> ยังแก้ไม่ได้?</h4>
+                <p>ติดต่อทีม Development พร้อมส่งข้อมูลเหล่านี้:</p>
+                <ul>
+                    <li>ผลลัพธ์จาก Command Prompt: <code>git --version</code> และ <code>where git</code></li>
+                    <li>Screenshot จาก System Check</li>
+                    <li>ไฟล์ <code>config.json</code></li>
+                    <li>Error message จาก Browser Console (F12)</li>
+                </ul>
+                <div class="text-center mt-3">
+                    <a href="setup-guide.html" class="btn btn-outline-primary" target="_blank">
+                        <i class="fas fa-book"></i> Setup Guide
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="text-center text-white mt-4">
+            <small>
+                <i class="fas fa-copyright"></i> 2026 AdaSoft Co., Ltd. - Internal Use Only
+            </small>
+        </div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"></script>
+</body>
+
+</html>

@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="th">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Setup Guide - AdaSoft Deploy Tool</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Sarabun:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800&display=swap');
+
+        body {
+            font-family: 'Sarabun', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1000px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+            padding: 0;
+            overflow: hidden;
+            margin: 20px auto;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #008f66 0%, #006648 100%);
+            color: white;
+            padding: 40px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin: 0;
+        }
+
+        .content {
+            padding: 40px;
+        }
+
+        h2 {
+            color: #008f66;
+            font-weight: 700;
+            margin-top: 30px;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 3px solid #008f66;
+        }
+
+        h3 {
+            color: #006648;
+            font-weight: 600;
+            margin-top: 25px;
+            margin-bottom: 15px;
+        }
+
+        h4 {
+            color: #333;
+            font-weight: 600;
+            margin-top: 20px;
+            margin-bottom: 10px;
+        }
+
+        code {
+            background: #f8f9fa;
+            padding: 2px 8px;
+            border-radius: 4px;
+            color: #e83e8c;
+            font-family: 'Courier New', monospace;
+        }
+
+        pre {
+            background: #1a1a1a;
+            color: #10b981;
+            padding: 20px;
+            border-radius: 8px;
+            overflow-x: auto;
+            margin: 15px 0;
+        }
+
+        pre code {
+            background: transparent;
+            color: #10b981;
+            padding: 0;
+        }
+
+        .alert {
+            border-radius: 8px;
+            padding: 15px 20px;
+            margin: 15px 0;
+            border-left: 4px solid;
+        }
+
+        .alert-warning {
+            background: rgba(245, 158, 11, 0.1);
+            border-color: #f59e0b;
+            color: #d97706;
+        }
+
+        .alert-danger {
+            background: rgba(239, 68, 68, 0.1);
+            border-color: #ef4444;
+            color: #dc2626;
+        }
+
+        .alert-info {
+            background: rgba(6, 182, 212, 0.1);
+            border-color: #06b6d4;
+            color: #0891b2;
+        }
+
+        .alert-success {
+            background: rgba(16, 185, 129, 0.1);
+            border-color: #10b981;
+            color: #059669;
+        }
+
+        .checklist {
+            list-style: none;
+            padding: 0;
+        }
+
+        .checklist li {
+            padding: 10px 0;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .checklist li:before {
+            content: "☐ ";
+            color: #008f66;
+            font-size: 1.3rem;
+            margin-right: 10px;
+        }
+
+        ul,
+        ol {
+            margin: 10px 0;
+            padding-left: 30px;
+        }
+
+        li {
+            margin: 8px 0;
+            line-height: 1.6;
+        }
+
+        .back-btn {
+            background: linear-gradient(135deg, #008f66 0%, #006648 100%);
+            color: white;
+            padding: 12px 30px;
+            border-radius: 8px;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: 600;
+            transition: all 0.3s;
+            margin-bottom: 20px;
+        }
+
+        .back-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(0, 143, 102, 0.4);
+            color: white;
+            text-decoration: none;
+        }
+
+        hr {
+            margin: 30px 0;
+            border-top: 2px solid #e2e8f0;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="header">
+            <h1><i class="fas fa-rocket"></i> AdaSoft Deploy Tool</h1>
+            <p style="font-size: 1.2rem; margin: 10px 0 0 0; opacity: 0.95;">Setup Guide - คู่มือการติดตั้งและใช้งาน</p>
+        </div>
+
+        <div class="content">
+            <a href="../index.php" class="back-btn">
+                <i class="fas fa-arrow-left"></i> กลับหน้าหลัก
+            </a>
+
+            <h2><i class="fas fa-list-check"></i> สิ่งที่ต้องเตรียมก่อนใช้งาน</h2>
+
+            <h3>1. ติดตั้ง Git</h3>
+            <p>Deploy Tool ต้องการ Git เพื่อดึงข้อมูล commits และไฟล์ที่เปลี่ยนแปลง</p>
+
+            <h4>Windows:</h4>
+            <ol>
+                <li>ดาวน์โหลด Git จาก: <a href="https://git-scm.com/download/win"
+                        target="_blank">https://git-scm.com/download/win</a></li>
+                <li>ติดตั้งตามขั้นตอน (ใช้ค่า default ได้เลย)</li>
+                <li><strong>สำคัญ</strong>: เลือก "Git from the command line and also from 3rd-party software"</li>
+                <li>ตรวจสอบว่าติดตั้งสำเร็จ: เปิด Command Prompt แล้วพิมพ์</li>
+            </ol>
+            <pre><code>git --version</code></pre>
+            <p>ควรเห็นเลขเวอร์ชัน เช่น <code>git version 2.43.0</code></p>
+
+            <h4>Linux/Mac:</h4>
+            <pre><code># Ubuntu/Debian
+sudo apt-get install git
+
+# CentOS/RHEL
+sudo yum install git
+
+# macOS (ถ้ายังไม่มี)
+brew install git</code></pre>
+
+            <h3>2. ตั้งค่า Git Config</h3>
+            <p>ถ้าเป็นครั้งแรกที่ใช้ Git บนเครื่อง ต้องตั้งค่า user:</p>
+            <pre><code>git config --global user.name "Your Name"
+git config --global user.email "your.email@example.com"</code></pre>
+
+            <h3>3. Clone โปรเจ็ค</h3>
+            <p>Clone โปรเจ็คที่ต้องการ deploy ลงในเครื่อง:</p>
+            <pre><code># ตัวอย่าง
+cd C:\Projects
+git clone https://github.com/your-org/AdaPos.git
+git clone https://github.com/your-org/AdaStoreBack.git</code></pre>
+
+            <h3>4. ตั้งค่า Deploy Tool</h3>
+
+            <h4>4.1 แก้ไขไฟล์ <code>includes/config.json</code></h4>
+            <pre><code>{
+    "sourcePath": "C:/Projects/",
+    "deployPath": "C:/Deploy/",
+    "projects": {
+        "AdaPos": "AdaPos/",
+        "AdaStoreBack": "AdaStoreBack/"
+    },
+    "googleDrivePaths": {
+        "AdaPos": {
+            "xPatch": "https://drive.google.com/drive/folders/YOUR_FOLDER_ID",
+            "xUpgrade": "https://drive.google.com/drive/folders/YOUR_FOLDER_ID",
+            "xDatabase": "https://drive.google.com/drive/folders/YOUR_FOLDER_ID"
+        }
+    }
+}</code></pre>
+
+            <h4>4.2 ปรับ Path ให้ถูกต้อง</h4>
+            <ul>
+                <li><strong>sourcePath</strong>: โฟลเดอร์ที่เก็บ source code ที่ clone มา</li>
+                <li><strong>deployPath</strong>: โฟลเดอร์ที่จะสร้าง deploy package</li>
+                <li><strong>projects</strong>: ชื่อโปรเจ็คและ path ย่อยจาก sourcePath</li>
+            </ul>
+
+            <div class="alert alert-warning">
+                <strong><i class="fas fa-exclamation-triangle"></i> สำคัญ:</strong> ใช้ forward slash (/) แทน backslash
+                (\) เสมอ!
+            </div>
+
+            <hr>
+
+            <h2><i class="fas fa-wrench"></i> Troubleshooting</h2>
+
+            <h3><i class="fas fa-times-circle text-danger"></i> ปัญหา: "No git history found" หรือไม่เห็น commits</h3>
+
+            <h4>วิธีแก้:</h4>
+
+            <p><strong>1. ตรวจสอบว่า Git ติดตั้งแล้ว</strong></p>
+            <pre><code>git --version</code></pre>
+            <p>ถ้าไม่เจอ ให้ติดตั้ง Git ก่อน (ดูข้างบน)</p>
+
+            <p><strong>2. ตรวจสอบว่า path ถูกต้อง</strong></p>
+            <ul>
+                <li>เปิดไฟล์ <code>includes/config.json</code></li>
+                <li>ตรวจสอบว่า <code>sourcePath</code> + <code>projects.AdaPos</code> รวมกันแล้วเป็น path ที่ถูกต้อง
+                </li>
+                <li>ลองเปิด Command Prompt แล้วพิมพ์:</li>
+            </ul>
+            <pre><code>cd C:\Projects\AdaPos
+git log -5</code></pre>
+            <p>ถ้าเห็น commits แสดงว่า path ถูกต้อง</p>
+
+            <p><strong>3. ตรวจสอบว่าเป็น Git repository</strong></p>
+            <pre><code>cd C:\Projects\AdaPos
+git status</code></pre>
+            <p>ถ้าขึ้น error "not a git repository" แสดงว่าโฟลเดอร์นี้ยังไม่ได้ clone จาก Git</p>
+
+            <p><strong>4. ตรวจสอบว่า Git อยู่ใน PATH</strong></p>
+            <ul>
+                <li>เปิด Command Prompt แล้วพิมพ์: <code>where git</code></li>
+                <li>ควรเห็น path เช่น <code>C:\Program Files\Git\cmd\git.exe</code></li>
+                <li>ถ้าไม่เจอ ให้เพิ่ม Git เข้า System PATH:
+                    <ol>
+                        <li>Control Panel → System → Advanced system settings</li>
+                        <li>Environment Variables → System variables → Path → Edit</li>
+                        <li>เพิ่ม: <code>C:\Program Files\Git\cmd</code></li>
+                        <li><strong>Restart Apache/IIS</strong></li>
+                    </ol>
+                </li>
+            </ul>
+
+            <p><strong>5. Restart Web Server</strong></p>
+            <p>หลังจากติดตั้ง Git หรือแก้ไข config ให้ restart web server:</p>
+            <pre><code># Apache
+httpd -k restart
+
+# หรือ restart service ใน Services.msc</code></pre>
+
+            <hr>
+
+            <h3><i class="fas fa-times-circle text-danger"></i> ปัญหา: "Project path not found"</h3>
+
+            <h4>วิธีแก้:</h4>
+            <ol>
+                <li>ตรวจสอบ path ใน <code>config.json</code></li>
+                <li>ตรวจสอบว่าใช้ forward slash (<code>/</code>) ไม่ใช่ backslash (<code>\</code>)</li>
+                <li>ตรวจสอบว่าโฟลเดอร์มีอยู่จริง</li>
+            </ol>
+
+            <div class="alert alert-success">
+                <strong><i class="fas fa-check-circle"></i> ตัวอย่างที่ถูกต้อง:</strong>
+                <pre style="margin-top: 10px;"><code>"sourcePath": "C:/Projects/",
+"projects": {
+    "AdaPos": "AdaPos/"
+}</code></pre>
+            </div>
+
+            <div class="alert alert-danger">
+                <strong><i class="fas fa-times-circle"></i> ตัวอย่างที่ผิด:</strong>
+                <pre style="margin-top: 10px;"><code>"sourcePath": "C:\\Projects\\",  // ❌ ใช้ backslash
+"projects": {
+    "AdaPos": "AdaPos"  // ❌ ขาด trailing slash
+}</code></pre>
+            </div>
+
+            <hr>
+
+            <h2><i class="fas fa-clipboard-check"></i> Quick Checklist</h2>
+
+            <p>ก่อนใช้งาน Deploy Tool ตรวจสอบว่า:</p>
+
+            <ul class="checklist">
+                <li>ติดตั้ง Git แล้ว (<code>git --version</code> ใช้งานได้)</li>
+                <li>Clone โปรเจ็คลงเครื่องแล้ว</li>
+                <li>แก้ไข <code>includes/config.json</code> ให้ path ถูกต้อง</li>
+                <li>ใช้ forward slash (<code>/</code>) ใน path ทั้งหมด</li>
+                <li>Web server มีสิทธิ์เข้าถึงโฟลเดอร์ source code</li>
+                <li>Git อยู่ใน System PATH</li>
+                <li>Restart web server แล้ว</li>
+            </ul>
+
+            <hr>
+
+            <h2><i class="fas fa-life-ring"></i> ยังแก้ไม่ได้?</h2>
+
+            <p>ส่งข้อมูลเหล่านี้มาให้ทีมช่วยดู:</p>
+
+            <ol>
+                <li><strong>ผลลัพธ์จาก Command Prompt:</strong>
+                    <pre><code>git --version
+where git
+cd C:\Projects\AdaPos
+git log -5</code></pre>
+                </li>
+                <li><strong>ไฟล์ config.json</strong> (ส่วน sourcePath และ projects)</li>
+                <li><strong>Error message</strong> จาก Browser Console (F12)</li>
+                <li><strong>Screenshot</strong> หน้าจอที่เกิดปัญหา</li>
+            </ol>
+
+            <hr>
+
+            <div class="alert alert-info">
+                <h4><i class="fas fa-book"></i> เอกสารเพิ่มเติม</h4>
+                <ul style="margin-bottom: 0;">
+                    <li>Git Documentation: <a href="https://git-scm.com/doc" target="_blank">https://git-scm.com/doc</a>
+                    </li>
+                    <li>PHP shell_exec: <a href="https://www.php.net/manual/en/function.shell-exec.php"
+                            target="_blank">https://www.php.net/manual/en/function.shell-exec.php</a></li>
+                </ul>
+            </div>
+
+            <div class="text-center" style="margin-top: 40px;">
+                <a href="../index.php" class="back-btn">
+                    <i class="fas fa-arrow-left"></i> กลับหน้าหลัก
+                </a>
+            </div>
+        </div>
+    </div>
+</body>
+
+</html>

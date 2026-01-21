@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="th">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="refresh" content="0; url=GitDeployTool-Clean.php">
+    <title>AdaSoft Deploy Tool - Redirecting...</title>
+    <script>
+        // Immediate redirect
+        window.location.href = 'GitDeployTool-Clean.php';
+    </script>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        body {
+            background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .main-container {
+            max-width: 1000px;
+            width: 100%;
+        }
+
+        .hero-card {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+            overflow: hidden;
+        }
+
+        .hero-header {
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+            color: white;
+            padding: 50px 30px;
+            text-align: center;
+            position: relative;
+        }
+
+        .header-icons {
+            position: absolute;
+            top: 20px;
+            right: 30px;
+            display: flex;
+            gap: 15px;
+        }
+
+        .header-icon-btn {
+            width: 45px;
+            height: 45px;
+            background: rgba(255, 255, 255, 0.2);
+            border: 2px solid rgba(255, 255, 255, 0.5);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.3rem;
+            transition: all 0.3s;
+            text-decoration: none;
+            backdrop-filter: blur(10px);
+        }
+
+        .header-icon-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+            border-color: rgba(255, 255, 255, 0.8);
+            transform: scale(1.1);
+            color: white;
+            text-decoration: none;
+        }
+
+        .header-icon-btn i {
+            margin: 0;
+        }
+
+        .hero-header h1 {
+            font-size: 3rem;
+            font-weight: bold;
+            margin-bottom: 15px;
+        }
+
+        .hero-header p {
+            font-size: 1.2rem;
+            opacity: 0.95;
+        }
+
+        .hero-body {
+            padding: 40px;
+        }
+
+        .action-card {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 30px;
+            margin-bottom: 20px;
+            transition: all 0.3s;
+            border: 2px solid transparent;
+        }
+
+        .action-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(40, 167, 69, 0.2);
+            border-color: #28a745;
+        }
+
+        .action-icon {
+            font-size: 3rem;
+            color: #28a745;
+            margin-bottom: 15px;
+        }
+
+        .btn-primary-custom {
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+            border: none;
+            color: white;
+            padding: 15px 40px;
+            border-radius: 30px;
+            font-weight: bold;
+            font-size: 1.1rem;
+            transition: all 0.3s;
+            display: inline-block;
+            text-decoration: none;
+        }
+
+        .btn-primary-custom:hover {
+            transform: scale(1.05);
+            box-shadow: 0 10px 30px rgba(40, 167, 69, 0.4);
+            color: white;
+            text-decoration: none;
+        }
+
+        .btn-secondary-custom {
+            background: white;
+            border: 2px solid #28a745;
+            color: #28a745;
+            padding: 12px 30px;
+            border-radius: 25px;
+            font-weight: bold;
+            transition: all 0.3s;
+            display: inline-block;
+            text-decoration: none;
+        }
+
+        .btn-secondary-custom:hover {
+            background: #28a745;
+            color: white;
+            text-decoration: none;
+        }
+
+        .status-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 8px;
+            animation: pulse 2s infinite;
+        }
+
+        .status-ready {
+            background: #28a745;
+        }
+
+        .status-warning {
+            background: #ffc107;
+        }
+
+        @keyframes pulse {
+
+            0%,
+            100% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0.5;
+            }
+        }
+
+        .feature-list {
+            list-style: none;
+            padding: 0;
+        }
+
+        .feature-list li {
+            padding: 10px 0;
+            border-bottom: 1px solid #eee;
+        }
+
+        .feature-list li:last-child {
+            border-bottom: none;
+        }
+
+        .feature-list i {
+            color: #28a745;
+            margin-right: 10px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="main-container">
+        <div class="hero-card">
+            <div class="hero-header">
+                <!-- Header Icons -->
+                <div class="header-icons">
+                    <a href="system-check.php" class="header-icon-btn" title="ตรวจสอบระบบ">
+                        <i class="fas fa-stethoscope"></i>
+                    </a>
+                    <a href="QUICK_START.html" class="header-icon-btn" title="แก้ปัญหา Git">
+                        <i class="fab fa-git-alt"></i>
+                    </a>
+                </div>
+
+                <h1><i class="fas fa-rocket"></i> AdaSoft Deploy Tool</h1>
+                <p>เครื่องมือจัดการ Deploy โปรเจ็ค AdaPos และ AdaStoreBack</p>
+            </div>
+
+            <div class="hero-body">
+                <!-- Status Check -->
+                <div class="text-center mb-4">
+                    <h4>
+                        <span class="status-indicator status-warning"></span>
+                        ตรวจสอบความพร้อมของระบบก่อนใช้งาน
+                    </h4>
+                    <p class="text-muted">กรุณาเลือกหนึ่งในตัวเลือกด้านล่าง</p>
+                </div>
+
+                <div class="row">
+                    <!-- Option 1: System Check -->
+                    <div class="col-md-6">
+                        <div class="action-card text-center">
+                            <div class="action-icon">
+                                <i class="fas fa-stethoscope"></i>
+                            </div>
+                            <h4>ตรวจสอบระบบ</h4>
+                            <p class="text-muted">ตรวจสอบว่าระบบพร้อมใช้งานหรือไม่</p>
+                            <a href="system-check.php" class="btn btn-primary-custom">
+                                <i class="fas fa-play-circle"></i> System Check
+                            </a>
+                        </div>
+                    </div>
+
+                    <!-- Option 2: Quick Start -->
+                    <div class="col-md-6">
+                        <div class="action-card text-center">
+                            <div class="action-icon">
+                                <i class="fas fa-book-open"></i>
+                            </div>
+                            <h4>คู่มือเริ่มต้น</h4>
+                            <p class="text-muted">วิธีแก้ปัญหาและเริ่มใช้งาน</p>
+                            <a href="QUICK_START.html" class="btn btn-primary-custom">
+                                <i class="fas fa-graduation-cap"></i> Quick Start
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Separator -->
+                <hr class="my-4">
+
+                <!-- Main Action -->
+                <div class="text-center mb-4">
+                    <h4>พร้อมใช้งานแล้ว?</h4>
+                    <p class="text-muted mb-4">เริ่มสร้าง Deploy Package ได้เลย</p>
+                    <a href="GitDeployTool-Clean.php" class="btn btn-primary-custom btn-lg">
+                        <i class="fas fa-rocket"></i> เปิด Deploy Tool
+                    </a>
+                </div>
+
+                <!-- Separator -->
+                <hr class="my-4">
+
+                <!-- Features -->
+                <div class="row">
+                    <div class="col-md-6">
+                        <h5><i class="fas fa-star"></i> Features</h5>
+                        <ul class="feature-list">
+                            <li><i class="fas fa-check-circle"></i> ดึง commits จาก Git</li>
+                            <li><i class="fas fa-check-circle"></i> สร้าง Deploy Package</li>
+                            <li><i class="fas fa-check-circle"></i> จัดการ Google Drive Links</li>
+                            <li><i class="fas fa-check-circle"></i> Deploy History Tracking</li>
+                        </ul>
+                    </div>
+                    <div class="col-md-6">
+                        <h5><i class="fas fa-book"></i> เอกสาร</h5>
+                        <ul class="feature-list">
+                            <li>
+                                <a href="README.md" target="_blank">
+                                    <i class="fas fa-file-alt"></i> README.md
+                                </a>
+                            </li>
+                            <li>
+                                <a href="SETUP_GUIDE.md" target="_blank">
+                                    <i class="fas fa-file-alt"></i> SETUP_GUIDE.md
+                                </a>
+                            </li>
+                            <li>
+                                <a href="GIT_SETUP_CHECKLIST.md" target="_blank">
+                                    <i class="fas fa-file-alt"></i> GIT_SETUP_CHECKLIST.md
+                                </a>
+                            </li>
+                            <li>
+                                <a href="QUICK_START.html" target="_blank">
+                                    <i class="fas fa-file-alt"></i> QUICK_START.html
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Separator -->
+                <hr class="my-4">
+
+                <!-- Quick Fix -->
+                <div class="alert alert-warning">
+                    <h5><i class="fas fa-exclamation-triangle"></i> เชื่อมต่อ Git ไม่ได้?</h5>
+                    <p class="mb-3">ลองวิธีเหล่านี้:</p>
+                    <div class="row">
+                        <div class="col-md-4 mb-2">
+                            <strong>1. Auto Fix Script</strong><br>
+                            <small>คลิกขวา <code>auto-fix-git.bat</code><br>→ Run as administrator</small>
+                        </div>
+                        <div class="col-md-4 mb-2">
+                            <strong>2. Checklist</strong><br>
+                            <small><a href="GIT_SETUP_CHECKLIST.md" target="_blank">ทำตามทีละขั้น</a></small>
+                        </div>
+                        <div class="col-md-4 mb-2">
+                            <strong>3. System Check</strong><br>
+                            <small><a href="system-check.php">ตรวจสอบระบบ</a></small>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Footer -->
+                <div class="text-center text-muted mt-4">
+                    <small>
+                        <i class="fas fa-copyright"></i> 2026 AdaSoft Co., Ltd. - Internal Use Only
+                    </small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"></script>
+
+    <!-- Auto redirect to system check after 3 seconds if user doesn't click anything -->
+    <script>
+        // Optional: Auto-check system on first visit
+        if (!localStorage.getItem('deploy_tool_visited')) {
+            setTimeout(function () {
+                if (confirm('ต้องการตรวจสอบความพร้อมของระบบหรือไม่?')) {
+                    window.location.href = 'system-check.php';
+                }
+                localStorage.setItem('deploy_tool_visited', 'true');
+            }, 2000);
+        }
+    </script>
+</body>
+
+</html>

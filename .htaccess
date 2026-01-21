@@ -1,0 +1,11 @@
+# AdaSoft Deploy Tool - Apache Configuration
+# Force UTF-8 encoding for Markdown files
+
+# Enable charset for .md files
+AddType "text/markdown; charset=UTF-8" .md
+
+# Enable charset for all text files
+AddDefaultCharset UTF-8
+
+# Optional: Enable directory listing with UTF-8
+IndexOptions Charset=UTF-8
