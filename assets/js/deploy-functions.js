@@ -1239,7 +1239,7 @@
         const volumeSlider = $('#radioVolume');
         const audio = document.getElementById('mainAudioPlayer');
         const stationNameText = $('#currentStationName');
-        const visualizer = $('#radioVisualizer');
+        const miniVisualizer = $('#radioVisualizerMini');
         const statusText = $('#radioStatusText');
 
         let hls = null;
@@ -1282,19 +1282,22 @@
         // Station Change
         stationSelect.change(function () {
             const name = $(this).find('option:selected').text();
-            stationNameText.text(name);
+            const url = $(this).val();
+            stationNameText.html('<i class="fas fa-compact-disc fa-spin-slow mr-2"></i> ' + name);
 
             if (isPlaying) {
                 playRadio(); // Re-play with new stream
             } else {
-                statusText.text('');
+                statusText.text('พร้อมสตรีมรายการสด');
             }
         });
 
-        // Volume Slider
-        volumeSlider.on('input', function () {
+        // Volume Sliders (Sync H & V)
+        $('#radioVolume, #radioVolumeH').on('input', function () {
+            const val = $(this).val();
+            $('#radioVolume, #radioVolumeH').val(val);
             if (audio) {
-                audio.volume = $(this).val();
+                audio.volume = val;
             }
         });
 
@@ -1302,9 +1305,8 @@
             const url = stationSelect.val();
             console.log('📻 Attempting to play:', url);
 
-            statusText.text('(กำลังเชื่อมต่อ...)').css('color', 'var(--primary-color)');
+            statusText.text('...กำลังเชื่อมต่อ...').css('color', '#38bdf8');
 
-            // Re-set audio settings
             if (audio) {
                 audio.pause();
                 audio.src = "";
@@ -1316,99 +1318,186 @@
                 hls = null;
             }
 
+            // 1) กันเคส playlist ไม่ให้ยิงตรง
+            if (url.endsWith('.pls') || url.endsWith('.m3u')) {
+                statusText.text('Playlist not supported directly').css('color', 'var(--danger-color)');
+                updateUI(false);
+                isPlaying = false;
+                return;
+            }
+
             if (url.includes('.m3u8')) {
                 // HLS Stream
                 if (window.Hls && Hls.isSupported()) {
                     hls = new Hls({
                         enableWorker: true,
-                        lowLatencyMode: true,
-                        backBufferLength: 60,
-                        manifestLoadingMaxRetry: 5,
-                        levelLoadingMaxRetry: 5
+                        lowLatencyMode: true
                     });
                     hls.loadSource(url);
                     hls.attachMedia(audio);
                     hls.on(Hls.Events.MANIFEST_PARSED, function () {
-                        audio.play().catch(e => {
-                            console.error("📻 Play failed:", e);
-                            statusText.text('(ถูกบล็อกโดยเบราว์เซอร์)').css('color', 'var(--danger-color)');
-                            updateUI(false);
-                            isPlaying = false;
-                        });
+                        audio.play().catch(onPlayError);
                     });
 
                     hls.on(Hls.Events.ERROR, function (event, data) {
                         if (data.fatal) {
-                            console.error("📻 HLS Fatal Error:", data);
-                            statusText.text('(สตรีมขัดข้อง)').css('color', 'var(--danger-color)');
+                            statusText.text('สตรีมขัดข้อง (Fatal)').css('color', 'var(--danger-color)');
                             updateUI(false);
                             isPlaying = false;
-
-                            switch (data.type) {
-                                case Hls.ErrorTypes.NETWORK_ERROR:
-                                    hls.startLoad();
-                                    break;
-                                case Hls.ErrorTypes.MEDIA_ERROR:
-                                    hls.recoverMediaError();
-                                    break;
-                                default:
-                                    hls.destroy();
-                                    break;
-                            }
                         }
                     });
                 } else if (audio && audio.canPlayType('application/vnd.apple.mpegurl')) {
-                    // For Safari
                     audio.src = url;
                     audio.addEventListener('canplay', function () {
-                        audio.play();
+                        audio.play().catch(onPlayError);
                     }, { once: true });
                 } else {
-                    statusText.text('(เบราว์เซอร์ไม่รองรับ HLS)').css('color', 'var(--danger-color)');
+                    statusText.text('Browser not supporting HLS').css('color', 'var(--danger-color)');
+                    updateUI(false);
+                    isPlaying = false;
+                    return;
                 }
             } else {
                 // Standard Audio Stream (MP3/AAC)
                 audio.src = url;
                 audio.play().then(() => {
-                    statusText.text('(สด)').css('color', 'var(--success-color)');
-                }).catch(e => {
-                    console.error("📻 Direct Play Error:", e);
-                    statusText.text('(เล่นไม่ได้)').css('color', 'var(--danger-color)');
-                    updateUI(false);
-                    isPlaying = false;
-                });
+                    statusText.text('เพลงกำลังบรรเลง • LIVE').css('color', 'var(--success-color)');
+                }).catch(onPlayError);
             }
 
             isPlaying = true;
             updateUI(true);
+
+            function onPlayError(e) {
+                console.error("📻 Play Error:", e);
+                statusText.text('ไม่สามารถรับชมได้ในขณะนี้').css('color', 'var(--danger-color)');
+                updateUI(false);
+                isPlaying = false;
+            }
         }
+
 
         function pauseRadio() {
             if (audio) {
                 audio.pause();
             }
             isPlaying = false;
-            statusText.text('');
+            statusText.text('หยุดการเล่นชั่วคราว');
             updateUI(false);
         }
 
         function updateUI(playing) {
             if (playing) {
-                playBtn.html('<i class="fas fa-pause"></i>');
+                playBtn.html('<i class="fas fa-pause"></i>').addClass('playing');
+                playerPanel.addClass('radio-playing');
                 radioBtn.addClass('radio-playing');
-                visualizer.show();
+                miniVisualizer.show();
             } else {
-                playBtn.html('<i class="fas fa-play"></i>');
+                playBtn.html('<i class="fas fa-play"></i>').removeClass('playing');
+                playerPanel.removeClass('radio-playing');
                 radioBtn.removeClass('radio-playing');
-                visualizer.hide();
+                miniVisualizer.hide();
             }
         }
 
-        // Initialize UI
-        visualizer.hide();
+        // Initialize UI values
         if (audio) {
             audio.volume = 0.5;
+            $('#radioVolume, #radioVolumeH').val(0.5);
+
+            // Set initial name with icon
+            const currentName = stationSelect.find('option:selected').text();
+            if (currentName) {
+                stationNameText.html('<i class="fas fa-compact-disc mr-2"></i> ' + currentName);
+            }
         }
+
+        // ========================================
+        // RADIO SMART INVITE LOGIC (3 MINS)
+        // ========================================
+        let hasPromptedRadio = localStorage.getItem('ada_radio_prompted') === 'true';
+
+        if (!hasPromptedRadio) {
+            setTimeout(() => {
+                // เช็คอีกครั้งว่ากำลังเล่นอยู่มั้ย (ถ้าเค้าเปิดเองก่อน 3 นาที ก็ไม่ต้องกวน)
+                if (!isPlaying && !$('#radioPlayerPanel').is(':visible')) {
+                    $('#modalRadioInvite').modal('show');
+                }
+            }, 60000); // 1 minute = 60,000 ms
+        }
+
+        $('#btnAcceptRadio').click(function () {
+            $('#modalRadioInvite').modal('hide');
+            localStorage.setItem('ada_radio_prompted', 'true');
+
+            // เปิดแผงวิทยุ
+            playerPanel.fadeIn(400);
+
+            // เริ่มเล่นเพลง (Auto-play station แรกที่เลือกไว้)
+            setTimeout(() => {
+                playRadio();
+                showAlert('success', 'เพลิดเพลินกับเสียงดนตรีระหว่างทำงานนะครับ 🎵');
+            }, 500);
+        });
+    });
+
+    // ========================================
+    // MINI CALENDAR LOGIC (LIVE & SELECTOR)
+    // ========================================
+    $(function () {
+        let currentViewDate = new Date();
+
+        function updateCalendar(date) {
+            const months = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
+            const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+            const fullMonths = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+
+            $('#calMonth').text(months[date.getMonth()]);
+            $('#calDate').text(date.getDate());
+            $('#calDayName').text(days[date.getDay()]);
+            $('#calFullDate').text(`${date.getDate()} ${fullMonths[date.getMonth()]} ${date.getFullYear()}`);
+
+            // Update hidden input value
+            const yyyy = date.getFullYear();
+            const mm = String(date.getMonth() + 1).padStart(2, '0');
+            const dd = String(date.getDate()).padStart(2, '0');
+            $('#realDateInput').val(`${yyyy}-${mm}-${dd}`);
+
+            // Highlight border if it's today
+            const today = new Date();
+            if (date.toDateString() === today.toDateString()) {
+                $('#miniCalendar').css('border-color', 'rgba(255, 255, 255, 0.5)');
+            } else {
+                $('#miniCalendar').css('border-color', 'rgba(255, 255, 255, 0.2)');
+            }
+        }
+
+        // Open Real Calendar Picker
+        $('#btnShowFullCal, #openCalendarPicker').click(function () {
+            $('#realDateInput')[0].showPicker(); // Open Browser's Native Date Picker
+        });
+
+        // When date is changed from real picker
+        $('#realDateInput').change(function () {
+            const selectedDate = new Date($(this).val());
+            if (!isNaN(selectedDate.getTime())) {
+                currentViewDate = selectedDate;
+                updateCalendar(currentViewDate);
+            }
+        });
+
+        $('#prevDay').click(function () {
+            currentViewDate.setDate(currentViewDate.getDate() - 1);
+            updateCalendar(currentViewDate);
+        });
+
+        $('#nextDay').click(function () {
+            currentViewDate.setDate(currentViewDate.getDate() + 1);
+            updateCalendar(currentViewDate);
+        });
+
+        // Initialize with real today date (NOT Hardcode)
+        updateCalendar(currentViewDate);
     });
 
     // ========================================
@@ -1420,6 +1509,12 @@
         // ดึงข้อมูลจาก Server เมื่อเริ่มต้น
         loadTasksFromServer();
 
+        // --- EMERGENCY RESTORE: AdaPPGroup ---
+        // จะทำงานหลังจากโหลดข้อมูลเสร็จใน Callback ของ loadTasksFromServer
+        // แต่เนื่องจาก JS เป็น Async เราต้องไปแทรกใน success ของ ajax หรือทำ interval เช็ค
+        // เพื่อความง่าย แก้ไข function success ข้างล่างแทน
+
+
         function loadTasksFromServer() {
             $.ajax({
                 url: '',
@@ -1429,6 +1524,9 @@
                 success: function (response) {
                     if (response.success && response.tasks && response.tasks.length > 0) {
                         tasks = response.tasks;
+
+
+
                         localStorage.setItem('ada_deploy_tasks', JSON.stringify(tasks));
                         renderTasks();
                         renderHistory();
@@ -1491,7 +1589,7 @@
 
         function renderTasks() {
             const container = $('#taskListContainer');
-            // กรองเอาเฉพาะงานที่ยังไม่เสร็จ (In Progress)
+            // กวาดเฉพาะที่ยังไม่ย้ายลง History (completed=false คือยังอยู่บน Board แต่ status อาจจะเป็น done, wait, hold)
             const activeTasks = tasks.filter(t => !t.completed);
 
             if (activeTasks.length === 0) {
@@ -1515,6 +1613,19 @@
                 const priority = task.priority || 'low';
                 const priorityClass = `priority-${priority}`;
 
+                // Status Styling & Badges
+                let statusClass = '';
+                let statusBadge = '';
+                if (task.status === 'done') {
+                    statusClass = 'task-status-done'; // CSS class needs to be defined or inline
+                } else if (task.status === 'wait') {
+                    statusClass = 'task-status-wait';
+                    statusBadge = '<span class="badge badge-warning ml-2" style="font-size: 0.7rem;"><i class="fas fa-pause"></i> WAIT</span>';
+                } else if (task.status === 'hold') {
+                    statusClass = 'task-status-hold';
+                    statusBadge = '<span class="badge badge-secondary ml-2" style="font-size: 0.7rem;"><i class="fas fa-hand-paper"></i> HOLD</span>';
+                }
+
                 // Create project badges
                 let projectHtml = '';
                 if (task.projects && task.projects.length > 0) {
@@ -1525,29 +1636,72 @@
                     projectHtml += '</div>';
                 }
 
+                // Buttons - Compact Version
+                const btnDone = `<button class="btn btn-xs ${task.status === 'done' ? 'btn-success' : 'btn-outline-success'} btn-status-action" data-type="done" data-id="${task.id}" title="Done"><i class="fas fa-check"></i></button>`;
+                const btnWait = `<button class="btn btn-xs ${task.status === 'wait' ? 'btn-warning' : 'btn-outline-warning'} btn-status-action" data-type="wait" data-id="${task.id}" title="Wait"><i class="fas fa-pause"></i></button>`;
+                const btnHold = `<button class="btn btn-xs ${task.status === 'hold' ? 'btn-secondary' : 'btn-outline-secondary'} btn-status-action" data-type="hold" data-id="${task.id}" title="Hold"><i class="fas fa-hand-paper"></i></button>`;
+
+                const isChecked = task.status === 'done' ? 'checked' : '';
+                const opacityStyle = task.status === 'done' ? 'opacity: 0.7;' : '';
+
+                // Background Color by Status
+                let bgColor = '';
+                if (task.status === 'done') {
+                    bgColor = 'background: linear-gradient(to right, #a8d5a8 0%, #e8f5e8 100%);'; // เขียวเข้ม
+                } else if (task.status === 'wait') {
+                    bgColor = 'background: linear-gradient(to right, #ffd966 0%, #fff4cc 100%);'; // เหลืองส้มเข้ม
+                } else if (task.status === 'hold') {
+                    bgColor = 'background: linear-gradient(to right, #e89b9f 0%, #f8e0e2 100%);'; // แดงเลือดหมูเข้ม
+                }
+
                 html += `
-                    <div class="task-item-modern ${priorityClass}" data-id="${task.id}">
-                        <input type="checkbox" class="task-checkbox">
+                    <div class="task-item-modern compact-task-item ${priorityClass} d-flex align-items-center flex-nowrap" data-id="${task.id}" style="${opacityStyle} ${bgColor} gap: 10px;">
                         
-                        <div class="priority-indicator" title="ปรับความสำคัญ">
-                            <span class="priority-dot dot-high ${priority === 'high' ? 'active' : ''}" data-priority="high" title="เร่งด่วน"></span>
-                            <span class="priority-dot dot-medium ${priority === 'medium' ? 'active' : ''}" data-priority="medium" title="สำคัญ"></span>
-                            <span class="priority-dot dot-low ${priority === 'low' ? 'active' : ''}" data-priority="low" title="ทั่วไป"></span>
+                        <!-- 1. Left: Checkbox & Priority (Fixed Width) -->
+                        <div class="d-flex align-items-center flex-shrink-0 item-status-col">
+                             <div class="custom-control custom-checkbox" style="transform: scale(1.1);">
+                                <input type="checkbox" class="custom-control-input task-checkbox-toggle" id="chk_${task.id}" ${isChecked} data-id="${task.id}">
+                                <label class="custom-control-label" for="chk_${task.id}"></label>
+                            </div>
+                            <div class="priority-dot-single ml-2 custom-tooltip" data-priority="${priority}" title="Impact: ${priority.toUpperCase()}"></div>
                         </div>
 
-                        <div class="task-content-wrapper">
-                            <div class="task-text">${task.name}</div>
-                            ${projectHtml}
-                            ${task.note ? `<div class="task-note"><i class="fas fa-info-circle mr-1"></i> ${task.note}</div>` : ''}
+                        <!-- 2. Center: Badges + Name (Flexible & Truncate) -->
+                        <div class="d-flex align-items-center flex-grow-1" style="min-width: 0; overflow: hidden; gap: 8px;">
+                            
+                            <!-- Projects Badge -->
+                            <div class="flex-shrink-0 d-flex">
+                                ${projectHtml}
+                            </div>
+                            
+                            <!-- Status Badges (Wait/Hold/Note) -->
+                            ${task.note ? `<div class="flex-shrink-0"><span class="badge badge-light border text-muted" title="${task.note}" style="max-width: 80px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; vertical-align: middle;"><i class="fas fa-info-circle mr-1"></i>${task.note}</span></div>` : ''}
+                            ${task.status !== 'active' && task.status !== 'done' ? `<div class="flex-shrink-0">${statusBadge}</div>` : ''}
+
+                            <!-- Task Name (Truncate Last) -->
+                            <div class="task-text font-weight-bold text-truncate" style="font-size: 0.95rem; color: #2d3748; padding-bottom: 1px;" title="${task.name}">
+                                ${task.name}
+                            </div>
                         </div>
-                        <div class="task-time">${task.time || ''}</div>
-                        <button class="btn-task-action btn-edit-task" data-id="${task.id}" title="แก้ไขรายการ">
-                            <i class="fas fa-edit"></i>
-                        </button>
-                        ${task.url ? `<button class="btn-task-action btn-sheet-link" data-url="${task.url}" title="เปิดเอกสารที่เกี่ยวข้อง"><i class="fas fa-file-excel"></i></button>` : ''}
-                        <button class="btn-task-action btn-delete-task" title="ลบรายการนี้">
-                            <i class="fas fa-times"></i>
-                        </button>
+
+                        <!-- 3. Right: Actions (Fixed, No Shrink) -->
+                        <div class="d-flex align-items-center flex-shrink-0 ml-2 pl-2 border-left" style="gap: 8px;">
+                            
+                            <!-- Status Buttons -->
+                            <div class="btn-group btn-group-sm" style="transform: scale(0.9);">
+                                ${btnDone}
+                                ${btnWait}
+                                ${btnHold}
+                            </div>
+
+                            <!-- Tools -->
+                             <div class="d-flex align-items-center" style="gap: 3px;">
+                                <small class="text-muted mr-1 d-none d-xl-inline-block" style="font-size: 0.7rem; min-width: 35px; text-align: right;">${task.time || ''}</small>
+                                <button class="btn btn-light btn-xs text-info btn-edit-task circle-btn-sm" data-id="${task.id}" title="แก้ไข"><i class="fas fa-edit" style="font-size: 0.7rem;"></i></button>
+                                ${task.url ? `<button class="btn btn-light btn-xs text-success btn-sheet-link circle-btn-sm" data-url="${task.url}" title="Sheet"><i class="fas fa-file-excel" style="font-size: 0.7rem;"></i></button>` : ''}
+                                <button class="btn btn-light btn-xs text-danger btn-delete-task circle-btn-sm" title="ลบ"><i class="fas fa-times" style="font-size: 0.7rem;"></i></button>
+                             </div>
+                        </div>
                     </div>
                 `;
             });
@@ -1632,7 +1786,6 @@
             const priority = priorityInput.val() || 'low';
             const note = noteInput.val().trim();
 
-            // Get selected projects
             const selectedProjects = [];
             $('input[name="taskProjects"]:checked').each(function () {
                 selectedProjects.push($(this).val());
@@ -1646,32 +1799,122 @@
             tasks.push({
                 id: Date.now(),
                 name: name,
-                projects: selectedProjects, // Collection of projects
+                projects: selectedProjects,
                 url: url,
                 priority: priority,
                 note: note,
                 completed: false,
+                status: 'doing', // Default status
                 createdAt: Date.now(),
                 completedAt: null,
-                time: timeStr,
-                details: '',
-                phaseFunc: false,
-                phaseScript: false,
-                phaseTest: false
+                time: timeStr
             });
 
+            // Reset Inputs
             input.val('');
             urlInput.val('');
             noteInput.val('');
             priorityInput.val('low');
-
-            // Reset project checkboxes
             $('input[name="taskProjects"]').prop('checked', false).closest('.project-checkbox-item').removeClass('active');
+            $('.priority-choice').removeClass('active');
+            $('.priority-choice[data-value="low"]').addClass('active');
 
             saveTasks();
         }
 
-        // Initialize checkboxes in Edit Modal
+        // --- Status Logic Handler ---
+        // --- Status Logic Handler ---
+        function handleStatusChange(taskId, newStatus) {
+            const task = tasks.find(t => t.id == taskId);
+            if (!task) return;
+
+            task.status = newStatus;
+
+            // ถ้า Done ให้เช็คว่าต้องย้ายลง History ไหม
+            if (newStatus === 'done') {
+                const myProjects = task.projects || [];
+
+                // หา Task อื่นๆ ที่อยู่บน Board และมี Project ตรงกัน
+                const sameProjectSiblingsOnBoard = tasks.filter(t =>
+                    !t.completed &&
+                    t.id !== task.id &&
+                    t.projects.some(p => myProjects.includes(p))
+                );
+
+                // NEW Logic: เช็คว่ามีใครยังไม่เสร็จสมบูรณ์ไหม (Doing/Wait/Hold)
+                const hasPending = sameProjectSiblingsOnBoard.some(t =>
+                    t.status === 'doing' || t.status === 'wait' || t.status === 'hold'
+                );
+
+                if (!hasPending && sameProjectSiblingsOnBoard.length > 0) {
+                    // กรณีมีเพื่อน และเพื่อนทั้งหมดก็ Done หมดแล้ว (ไม่มี Doing/Wait/Hold) 
+                    // -> ย้ายทุกคนลง History (กวาดเรียบ Project Closed)
+
+                    const now = Date.now();
+                    const dateStr = new Date().toLocaleDateString('th-TH');
+
+                    // 1. ตัวมันเอง
+                    task.completed = true;
+                    task.completedAt = now;
+                    task.completedDate = dateStr;
+
+                    // 2. เพื่อนๆ
+                    sameProjectSiblingsOnBoard.forEach(sib => {
+                        sib.completed = true;
+                        sib.completedAt = now;
+                        sib.completedDate = dateStr;
+                    });
+
+                    showAlert('success', 'Project Completed! ย้ายงานทั้งหมดลงประวัติเรียบร้อย');
+
+                } else if (!hasPending && sameProjectSiblingsOnBoard.length === 0) {
+                    // กรณีงานเดี่ยวๆ (ไม่มีเพื่อนในโปรเจ็คบนบอร์ด) หรือเพื่อนลง History ไปหมดแล้ว
+                    // ให้ค้างไว้ก่อน (Status: Done) เผื่อ User อยากแก้ไขสถานะ 
+                    // จะย้ายก็ต่อเมื่อ User กดลบ หรือระบบ Clear แบบ Manual (หรือจะให้ย้ายเลย? User บอก "กดอันเดียวย้ายหมด" แสดงว่าเขาไม่อยากให้มันหายวูบ)
+
+                    // เอาแบบนี้: ถ้างานเดี่ยวๆ ให้ค้างไว้เป็น Done (ไม่ Auto Move) 
+                    // แต่ถ้างานกลุ่ม และทุกคน Done หมด ให้ Move ยกแผง
+
+                    // แต่เดี๋ยวก่อน requirement คือ "กรณีที่ทำเสร็จเป็น Task ยังไม่ต้องย้าย ต้องเสร็จทุก Task ในโปรเจ็คก่อนจึงจะย้าย"
+                    // แปลว่าถ้างานเดี่ยวๆ มันก็คือ "เสร็จทุก Task" แล้วหนิ?
+
+                    // OK งั้นยึด Active Logic: Pending Count == 0 -> Sweep
+                    // แต่เพื่อกันพลาดสำหรับงานเดี่ยวๆ ผมจะ "Auto Complete" ก็ต่อเมื่อมันไม่ใช่การกดผิด
+                    // เอาเป็นว่า ถ้างานเดี่ยว กด Done -> ย้ายเลย (ถือว่าจบจ็อบ)
+                    // แต่ถ้ามีเพื่อน (Wait/Hold) -> ไม่ย้าย (ถูกต้องตามที่แก้ตะกี้)
+
+                    // กลับมาใช้ Logic เดิมที่แก้ Wait/Hold = Pending ก่อนครับ
+
+                    const now = Date.now();
+                    const dateStr = new Date().toLocaleDateString('th-TH');
+
+                    task.completed = true;
+                    task.completedAt = now;
+                    task.completedDate = dateStr;
+                    showAlert('success', 'งานเสร็จสิ้นย้ายลงประวัติเรียบร้อย');
+                } else {
+                    // ยังมี Doing/Wait/Hold เหลือ -> แค่เปลี่ยนสถานะ (Render ใหม่จะโชว์ Done แต่ยังอยู่บนบอร์ด)
+                }
+            }
+
+            saveTasks();
+        }
+
+        // Priority Choice Handler
+        $(document).on('click', '.priority-choice', function () {
+            const val = $(this).data('value');
+            if ($(this).hasClass('edit-priority-choice')) {
+                $('.edit-priority-choice').removeClass('active');
+                $(this).addClass('active');
+                $('#editTaskPriority').val(val);
+            } else {
+                $('.priority-choice').not('.edit-priority-choice').removeClass('active');
+                $(this).addClass('active');
+                $('#ocmTaskPriority').val(val);
+            }
+        });
+
+        // Initialize Edit Checkboxes
         function renderEditModalProjectCheckboxes(task) {
             const container = $('#editTaskProjectList');
             const projects = (window.deployConfig && window.deployConfig.projects) ? window.deployConfig.projects : {};
@@ -1688,13 +1931,55 @@
             container.html(html || '<div class="text-muted small">ไม่พบรายชื่อโปรเจ็ค</div>');
         }
 
+        // --- Event Bindings ---
+
+        // Add Task
+        $('#btnAddTask').off('click').on('click', addTask);
+
+        // Project Checkbox Style
+        $(document).on('change', 'input[name="taskProjects"]', function () {
+            $(this).closest('.project-checkbox-item').toggleClass('active', $(this).is(':checked'));
+        });
+
+        // Checkbox Toggle (Acts as Done/Doing Toggle)
+        $(document).on('change', '.task-checkbox-toggle', function () {
+            const id = $(this).data('id');
+            const isChecked = $(this).prop('checked');
+            handleStatusChange(id, isChecked ? 'done' : 'doing');
+        });
+
+        // Status Buttons Click
+        $(document).on('click', '.btn-status-action', function () {
+            const id = $(this).data('id');
+            const type = $(this).data('type');
+
+            // ถ้ากดปุ่มเดิมซ้ำ ให้ toggle กลับเป็น doing (หรือจะบังคับเป็น status นั้นเลยก็ได้)
+            // เอาแบบบังคับเป็น status นั้นเลยตาม Requirement ปุ่ม
+            // แต่ถ้าอยาก Un-hold ก็ต้องมีวิธีกดกลับ...
+            // Logic: ถ้า status ปัจจุบัน == type ที่กด -> กลับไปเป็น doing
+            const task = tasks.find(t => t.id == id);
+            if (task && task.status === type) {
+                handleStatusChange(id, 'doing');
+            } else {
+                handleStatusChange(id, type);
+            }
+        });
+
+
+
         function openEditTaskModal(id) {
             const task = tasks.find(t => t.id == id);
             if (!task) return;
 
             $('#editTaskId').val(task.id);
             $('#editTaskName').val(task.name);
-            $('#editTaskPriority').val(task.priority || 'low');
+            const priority = task.priority || 'low';
+            $('#editTaskPriority').val(priority);
+
+            // NEW: Select correct color dot in Modal
+            $('.edit-priority-choice').removeClass('active');
+            $(`.edit-priority-choice[data-value="${priority}"]`).addClass('active');
+
             $('#editTaskUrl').val(task.url || '');
             $('#editTaskNote').val(task.note || '');
             $('#editTaskDetails').val(task.details || '');
@@ -2144,6 +2429,11 @@
                 $('#helpResponseArea').show();
             }
         });
+
+        // ========================================
+        // RESOURCE HUB LOGIC has been moved to: assets/js/resource-hub.js
+        // ========================================
+
     });
 
 })();

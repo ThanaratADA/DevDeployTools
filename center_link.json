@@ -1,0 +1,404 @@
+[
+    {
+        "id": "1769284501013",
+        "category": "meeting",
+        "title": "Daily Scam Meeting",
+        "url": "https:\/\/meet.jit.si\/PHPDailyMeeting",
+        "credentials": [],
+        "user": "",
+        "pass": "",
+        "serverTier": "DEV",
+        "sheetType": "Work",
+        "meetingType": "Team",
+        "customBgColor": "#56cae1",
+        "order": 0
+    },
+    {
+        "id": "1769285061021",
+        "category": "meeting",
+        "title": "ISSUE Meeting",
+        "url": "https:\/\/meet.jit.si\/PHPMeeting-Bank",
+        "credentials": [],
+        "user": "",
+        "pass": "",
+        "serverTier": "DEV",
+        "sheetType": "Work",
+        "meetingType": "Private",
+        "customBgColor": "#c991e3",
+        "order": 1
+    },
+    {
+        "id": "1769285176059",
+        "category": "meeting",
+        "title": "Ada Dev Trainning",
+        "url": "https:\/\/meet.jit.si\/adadevtrainning",
+        "credentials": [],
+        "user": "",
+        "pass": "",
+        "serverTier": "DEV",
+        "sheetType": "Work",
+        "meetingType": "Dev",
+        "customBgColor": "#f07575",
+        "order": 2
+    },
+    {
+        "id": "1769285276736",
+        "category": "other",
+        "title": "NotebookLM",
+        "url": "https:\/\/notebooklm.google.com\/?icid=home_maincta&_gl=1*1wenr9x*_ga*MTgxNTcxMDgyOS4xNzY3NjgxODI4*_ga_W0LDH41ZCB*czE3NjkyODUyMTQkbzIkZzAkdDE3NjkyODUyMTgkajU2JGwwJGgw&authuser=2&pageId=none",
+        "credentials": [],
+        "user": "",
+        "pass": "",
+        "serverTier": "DEV",
+        "sheetType": "Work",
+        "meetingType": "Private",
+        "customBgColor": "#78cf59",
+        "order": 0
+    },
+    {
+        "id": "1769285357713",
+        "category": "other",
+        "title": "Standard Coding",
+        "url": "https:\/\/docs.google.com\/spreadsheets\/d\/1y4dzSya8MAk0z5_6iLmnCYOyGRIeMIRtJ32Z_IoNQJw\/edit?gid=0#gid=0",
+        "credentials": [],
+        "user": "",
+        "pass": "",
+        "serverTier": "DEV",
+        "sheetType": "Knowledge",
+        "meetingType": "Private",
+        "customBgColor": "#bdd129",
+        "order": 1
+    },
+    {
+        "id": "1769285435593",
+        "category": "other",
+        "title": "Log Remote Server 126",
+        "url": "https:\/\/docs.google.com\/spreadsheets\/d\/1am88E-auYyAFg7fa8UClMYbZl-VWwRLWGpLzDRS58q0\/edit?gid=1103982575#gid=1103982575",
+        "credentials": [],
+        "user": "",
+        "pass": "",
+        "serverTier": "DEV",
+        "sheetType": "Center",
+        "meetingType": "Private",
+        "customBgColor": "#72dab2",
+        "order": 2
+    },
+    {
+        "id": "1769285670003",
+        "category": "other",
+        "title": "AdaPos+ System",
+        "url": "https:\/\/docs.google.com\/spreadsheets\/d\/1F5MdOseyAe1wZt8XMRKr1yOjDr1UZSSQ-0ug7o1SZS8\/edit?gid=1264741822#gid=1264741822",
+        "credentials": [],
+        "user": "",
+        "pass": "",
+        "serverTier": "DEV",
+        "sheetType": "Knowledge",
+        "meetingType": "Private",
+        "customBgColor": "#e1bb51",
+        "order": 3
+    },
+    {
+        "id": "1769285916002",
+        "category": "other",
+        "title": "RabbitMQ",
+        "url": "http:\/\/27.254.239.245:15672\/",
+        "credentials": [],
+        "user": "",
+        "pass": "",
+        "serverTier": "DEV",
+        "sheetType": "Work",
+        "meetingType": "Private",
+        "customBgColor": "#f06a6a",
+        "order": 4
+    },
+    {
+        "id": "1769289050974",
+        "category": "AdaPos5StoreBack",
+        "title": "AdaStoreBackSTD (DEV)",
+        "url": "https:\/\/dev.ada-soft.com\/AdaStoreBackSTD\/login",
+        "credentials": [
+            {
+                "user": "009",
+                "pass": "12345678",
+                "role": "HQ",
+                "desc": "",
+                "agnCode": "",
+                "agnName": "",
+                "bchCode": "",
+                "bchName": ""
+            },
+            {
+                "user": "tanarat17",
+                "pass": "12345678",
+                "role": "Branch",
+                "desc": "",
+                "agnCode": "00158",
+                "agnName": "ThanaratSoft",
+                "bchCode": "07115",
+                "bchName": "ThanaratSoft"
+            }
+        ],
+        "user": "",
+        "pass": "",
+        "serverTier": "DEV",
+        "sheetType": "Work",
+        "meetingType": "Private",
+        "order": 0
+    },
+    {
+        "id": "1769289972731",
+        "category": "AdaPos5StoreBack",
+        "title": "AdaPos5.0-STDByAgent (DEV)",
+        "url": "https:\/\/dev.ada-soft.com\/AdaPos5.0-STDByAgent",
+        "credentials": [
+            {
+                "user": "tanarat17",
+                "pass": "12345678",
+                "role": "Agency",
+                "desc": "",
+                "agnCode": "00036",
+                "agnName": "Agency Boss Marketx",
+                "bchCode": "",
+                "bchName": ""
+            },
+            {
+                "user": "0810450011",
+                "pass": "999999999",
+                "role": "Agency",
+                "desc": "",
+                "agnCode": "00032",
+                "agnName": "M Business 11",
+                "bchCode": "",
+                "bchName": ""
+            }
+        ],
+        "user": "",
+        "pass": "",
+        "serverTier": "DEV",
+        "sheetType": "Work",
+        "meetingType": "Private",
+        "order": 2
+    },
+    {
+        "id": 1769290555439,
+        "category": "AdaPos5StoreBack",
+        "title": "AdaPos5.0-FB_ByAgency",
+        "url": "https:\/\/dev.ada-soft.com\/AdaPos5.0-FB_ByAgency",
+        "credentials": [
+            {
+                "user": "0533333333",
+                "pass": "123456789",
+                "role": "Agency",
+                "desc": "",
+                "agnCode": "00002",
+                "agnName": "ฟู๊ดพาราไดซ์",
+                "bchCode": "",
+                "bchName": ""
+            },
+            {
+                "user": "0233333333",
+                "pass": "12345678",
+                "role": "Agency",
+                "desc": "",
+                "agnCode": "00007",
+                "agnName": "บริษัท อิ่มอร่อย 360 จำกัด",
+                "bchCode": "",
+                "bchName": ""
+            }
+        ],
+        "user": "",
+        "pass": "",
+        "serverTier": "DEV",
+        "sheetType": "Work",
+        "meetingType": "Private",
+        "order": 5
+    },
+    {
+        "id": 1769290722297,
+        "category": "AdaPos5StoreBack",
+        "title": "AdaSCHome",
+        "url": "https:\/\/dev.ada-soft.com\/AdaSCHome",
+        "credentials": [
+            {
+                "user": "009",
+                "pass": "12345678",
+                "role": "HQ",
+                "desc": "ไม่มี AD แต่มี BCH",
+                "agnCode": "",
+                "agnName": "",
+                "bchCode": "",
+                "bchName": ""
+            }
+        ],
+        "user": "",
+        "pass": "",
+        "serverTier": "DEV",
+        "sheetType": "Work",
+        "meetingType": "Private",
+        "order": 8
+    },
+    {
+        "id": 1769290784436,
+        "category": "AdaPos5StoreBack",
+        "title": "AdaPos5StoreBackLicense",
+        "url": "https:\/\/dev.ada-soft.com\/AdaPos5StoreBackLicense\/",
+        "credentials": [
+            {
+                "user": "009",
+                "pass": "12345678",
+                "role": "HQ",
+                "desc": "",
+                "agnCode": "",
+                "agnName": "",
+                "bchCode": "",
+                "bchName": ""
+            }
+        ],
+        "user": "",
+        "pass": "",
+        "serverTier": "DEV",
+        "sheetType": "Work",
+        "meetingType": "Private",
+        "order": 6
+    },
+    {
+        "id": 1769290833158,
+        "category": "AdaPos5StoreBack",
+        "title": "AdaMember",
+        "url": "https:\/\/dev.ada-soft.com\/AdaMember",
+        "credentials": [
+            {
+                "user": "009",
+                "pass": "12345678",
+                "role": "HQ",
+                "desc": "",
+                "agnCode": "",
+                "agnName": "",
+                "bchCode": "",
+                "bchName": ""
+            }
+        ],
+        "user": "",
+        "pass": "",
+        "serverTier": "DEV",
+        "sheetType": "Work",
+        "meetingType": "Private",
+        "order": 7
+    },
+    {
+        "id": "1769290864827",
+        "category": "AdaPos5StoreBack",
+        "title": "AdaETax",
+        "url": "https:\/\/dev.ada-soft.com\/AdaETax",
+        "credentials": [
+            {
+                "user": "adasoftcomp@test.com",
+                "pass": "12345678",
+                "role": "HQ",
+                "desc": "",
+                "agnCode": "",
+                "agnName": "",
+                "bchCode": "",
+                "bchName": ""
+            }
+        ],
+        "user": "",
+        "pass": "",
+        "serverTier": "DEV",
+        "sheetType": "Work",
+        "meetingType": "Private",
+        "order": 9
+    },
+    {
+        "id": 1769291048310,
+        "category": "AdaPos5StoreBack",
+        "title": "AdaPPGroup",
+        "url": "https:\/\/dev.ada-soft.com\/AdaPPGroup",
+        "credentials": [
+            {
+                "user": "009",
+                "pass": "12345678",
+                "role": "HQ",
+                "desc": "",
+                "agnCode": "",
+                "agnName": "",
+                "bchCode": "",
+                "bchName": ""
+            },
+            {
+                "user": "0925632222",
+                "pass": "12345678",
+                "role": "Branch",
+                "desc": "User ไม่มี ตัวแทนขาย แต่ ผูกหลายสาขา",
+                "agnCode": "",
+                "agnName": "",
+                "bchCode": "",
+                "bchName": ""
+            }
+        ],
+        "user": "",
+        "pass": "",
+        "serverTier": "DEV",
+        "sheetType": "Work",
+        "meetingType": "Private",
+        "order": 4
+    },
+    {
+        "id": "1769291321833",
+        "category": "AdaPos5StoreBack",
+        "title": "AdaStorebackSTD (SIT)",
+        "url": "https:\/\/sit.ada-soft.com\/AdaStorebackSTD",
+        "credentials": [
+            {
+                "user": "009",
+                "pass": "12345678",
+                "role": "HQ",
+                "desc": "",
+                "agnCode": "",
+                "agnName": "",
+                "bchCode": "",
+                "bchName": ""
+            }
+        ],
+        "user": "",
+        "pass": "",
+        "serverTier": "SIT",
+        "sheetType": "Work",
+        "meetingType": "Private",
+        "order": 1
+    },
+    {
+        "id": "1769291633257",
+        "category": "AdaPos5StoreBack",
+        "title": "AdaPos5.0-STDByAgent (SIT)",
+        "url": "https:\/\/sit.ada-soft.com\/AdaStorebackSTDAgency",
+        "credentials": [
+            {
+                "user": "053111111",
+                "pass": "P@ssw0rd2025",
+                "role": "Agency",
+                "desc": "",
+                "agnCode": "00003",
+                "agnName": "AD1-CNX Space-X",
+                "bchCode": "",
+                "bchName": ""
+            },
+            {
+                "user": "009",
+                "pass": "12345678",
+                "role": "HQ",
+                "desc": "",
+                "agnCode": "",
+                "agnName": "",
+                "bchCode": "",
+                "bchName": ""
+            }
+        ],
+        "user": "",
+        "pass": "",
+        "serverTier": "SIT",
+        "sheetType": "Work",
+        "meetingType": "Private",
+        "order": 3
+    }
+]

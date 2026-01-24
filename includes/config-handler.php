@@ -144,6 +144,11 @@ class ConfigHandler {
                 }
             }
         }
+
+        // Update StoreBack Colors
+        if (isset($postData['storeBackColors'])) {
+             $config['storeBackColors'] = $postData['storeBackColors'];
+        }
         
         file_put_contents($this->configFile, json_encode($config, JSON_PRETTY_PRINT));
         return true;

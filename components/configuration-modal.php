@@ -264,6 +264,45 @@
                         </div>
                     </div>
 
+                    <!-- ========================================
+                         SECTION 5: STOREBACK COLORS CONFIGURATION
+                         ======================================== -->
+                    <div class="card card-custom mb-4">
+                        <div class="card-header card-header-custom">
+                            <i class="fas fa-palette"></i> AdaPos5StoreBack Environment Colors
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <?php 
+                                $envColors = $config['storeBackColors'] ?? [
+                                    'DEV' => '#C8E6C9',
+                                    'SIT' => '#BBDEFB',
+                                    'PROD' => '#FFE082',
+                                    'CS' => '#E0F7FA'
+                                ];
+                                foreach ($envColors as $env => $color): 
+                                ?>
+                                <div class="col-md-3">
+                                    <div class="form-group">
+                                        <label class="small font-weight-bold"><?= $env ?> Color:</label>
+                                        <div class="input-group input-group-sm">
+                                            <input type="text" class="form-control" name="storeBackColors[<?= $env ?>]" value="<?= $color ?>" placeholder="#HEXCOLOR" id="colorInput_<?= $env ?>" style="height: 31px;">
+                                            <div class="input-group-append">
+                                                 <input type="color" class="form-control p-0 border-left-0" value="<?= $color ?>" 
+                                                        onchange="document.getElementById('colorInput_<?= $env ?>').value = this.value;" 
+                                                        style="width: 40px; height: 31px; border-radius: 0 4px 4px 0;">
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <?php endforeach; ?>
+                            </div>
+                            <small class="text-muted">
+                                <i class="fas fa-info-circle"></i> กำหนดสีพื้นหลังสำหรับแต่ละ Environment (DEV, SIT, PROD, CS)
+                            </small>
+                        </div>
+                    </div>
+
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-dismiss="modal">
