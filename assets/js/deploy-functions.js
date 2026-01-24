@@ -2120,6 +2120,30 @@
         renderProjectCheckboxes();
         renderTasks();
         renderHistory();
+
+        $('#floatingHelpBtn').click(function () {
+            $('#helpQuestionArea').show();
+            $('#helpResponseArea').hide();
+            $('#modalHelpTask').modal('show');
+        });
+
+        $('#btnHelpYes').click(function () {
+            const secret = '4Lil4Lit4LiH4LiW4Liy4Lih4Lie4Li14LmI4LmA4LiI4Lih4Liq4LmM4Liq4Li0';
+
+            try {
+                const decoded = decodeURIComponent(escape(atob(secret)));
+                $('#secretMessage').text(decoded);
+
+                $('#helpQuestionArea').fadeOut(300, function () {
+                    $('#helpResponseArea').fadeIn(300);
+                });
+            } catch (e) {
+                console.error('System error:', e);
+                $('#secretMessage').text('ขออภัย ระบบขัดข้องชั่วคราว กรุณาลองใหม่');
+                $('#helpQuestionArea').hide();
+                $('#helpResponseArea').show();
+            }
+        });
     });
 
 })();

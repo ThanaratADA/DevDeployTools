@@ -1117,6 +1117,43 @@ if ($_SERVER['REQUEST_METHOD'] == 'GET') {
         
         <audio id="mainAudioPlayer" style="display:none;"></audio>
     </div>
+    <!-- Floating Help Button -->
+    <div class="floating-help-btn" id="floatingHelpBtn" title="ต้องการความช่วยเหลือ?">
+        <i class="fas fa-question-circle"></i>
+    </div>
+
+    <!-- Help Modal -->
+    <div class="modal fade" id="modalHelpTask" tabindex="-1" role="dialog" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+            <div class="modal-content help-modal-content border-0 shadow-lg">
+                <div class="modal-header help-modal-header py-3">
+                    <h5 class="modal-title font-weight-bold"><i class="fas fa-lightbulb mr-2"></i> ระบบช่วยเหลือผู้ช่วยอัจฉริยะ</h5>
+                    <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body p-4 text-center">
+                    <div id="helpQuestionArea">
+                        <i class="fas fa-tasks fa-3x text-primary mb-3"></i>
+                        <h4 class="font-weight-bold mb-3">ประสบปัญหาเรื่อง Task อยู่ใช่ไหม?</h4>
+                        <p class="text-muted">หากคุณกำลังติดขัดเรื่องความคืบหน้าของงาน หรือต้องการคำปรึกษาเพิ่มเติม</p>
+                        <div class="d-flex justify-content-center mt-4" style="gap: 15px;">
+                            <button type="button" class="btn btn-primary-custom px-5" id="btnHelpYes">ใช่ครับ/ค่ะ</button>
+                            <button type="button" class="btn btn-outline-secondary px-5" data-dismiss="modal">ไม่เป็นไร</button>
+                        </div>
+                    </div>
+                    <div id="helpResponseArea" style="display: none;">
+                        <i class="fas fa-user-tie fa-4x text-success mb-3"></i>
+                        <h3 class="font-weight-bold text-success mb-2">ไม่ต้องกังวลไป!</h3>
+                        <div class="p-4 bg-light rounded-lg shadow-sm mb-3">
+                            <h4 id="secretMessage" class="m-0 font-weight-bold text-dark"></h4>
+                        </div>
+                        <button type="button" class="btn btn-secondary-custom px-4" data-dismiss="modal">รับทราบครับ</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 </body>
 </html>
 
