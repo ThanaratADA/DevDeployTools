@@ -1554,3 +1554,187 @@ select.form-control-custom {
     border-color: var(--primary-color);
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
 }
+
+/* ========================================
+   TASK HISTORY COMPACT STYLES (NEW)
+   ======================================== */
+.task-history-list {
+    max-height: 280px;
+    overflow-y: auto;
+    padding-right: 5px;
+}
+
+.task-history-list::-webkit-scrollbar {
+    width: 6px;
+}
+
+.task-history-list::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 10px;
+}
+
+.task-history-list::-webkit-scrollbar-thumb {
+    background: #ccc;
+    border-radius: 10px;
+}
+
+.task-history-list::-webkit-scrollbar-thumb:hover {
+    background: var(--primary-color);
+}
+
+.history-task-item {
+    background: white;
+    padding: 8px 15px;
+    border-radius: 8px;
+    margin-bottom: 6px;
+    border-left: 4px solid var(--success-color);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+    transition: var(--transition);
+    gap: 15px;
+    flex-wrap: wrap;
+    /* เพื่อให้กระโดดขึ้นบรรทัดใหม่ได้ถ้าที่ไม่พอ เช่นเวลาเปิดแผงแก้ไข */
+}
+
+.history-task-item:hover {
+    background: #fdfdfd;
+    box-shadow: var(--shadow-sm);
+}
+
+.history-task-info {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    overflow: hidden;
+    min-width: 400px;
+    /* ยึดระดับกว้างพอสมควรเพื่อให้ชื่อและ meta อยู่แถวเดียวกัน */
+}
+
+.history-task-header {
+    font-weight: 600;
+    color: var(--text-primary);
+    font-size: 0.88rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: flex;
+    align-items: center;
+    margin-bottom: 0 !important;
+}
+
+.history-task-meta {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    white-space: nowrap;
+}
+
+.history-task-meta i {
+    font-size: 0.7rem;
+    width: 12px;
+    text-align: center;
+}
+
+/* Priority Dots for History */
+.history-priority-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    display: inline-block;
+    margin-right: 2px;
+}
+
+.h-dot-high {
+    background-color: #ef4444;
+    box-shadow: 0 0 5px rgba(239, 68, 68, 0.4);
+}
+
+.h-dot-medium {
+    background-color: #f59e0b;
+    box-shadow: 0 0 5px rgba(245, 158, 11, 0.4);
+}
+
+.h-dot-low {
+    background-color: #10b981;
+    box-shadow: 0 0 5px rgba(16, 185, 129, 0.4);
+}
+
+.history-task-time {
+    display: flex;
+    gap: 15px;
+    font-size: 0.78rem;
+    color: var(--text-muted);
+    min-width: 180px;
+    justify-content: flex-end;
+}
+
+.history-task-time div {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    white-space: nowrap;
+}
+
+.history-task-header .task-projects {
+    display: inline-flex;
+    margin-left: 10px;
+    margin-top: 0 !important;
+}
+
+/* Multi-Project Selection Styles */
+.project-selection-wrapper {
+    background: #ffffff !important;
+    border: 1px solid #e2e8f0 !important;
+    border-radius: 12px !important;
+    transition: var(--transition);
+}
+
+.project-checkbox-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: #f8fafc;
+    padding: 4px 10px;
+    border-radius: 6px;
+    border: 1px solid #e2e8f0;
+    cursor: pointer;
+    transition: var(--transition);
+    user-select: none;
+    font-size: 0.8rem;
+}
+
+.project-checkbox-item:hover {
+    background: #f1f5f9;
+}
+
+.project-checkbox-item.active {
+    background: rgba(0, 143, 102, 0.08);
+    border-color: var(--primary-color);
+    color: var(--primary-dark);
+    font-weight: 600;
+}
+
+.project-checkbox-item input[type="checkbox"] {
+    width: 14px;
+    height: 14px;
+    accent-color: var(--primary-color);
+}
+
+.task-project-badge {
+    background: #e6f6ee;
+    color: #008f66;
+    font-size: 0.68rem;
+    font-weight: 700;
+    padding: 2px 10px;
+    border-radius: 20px;
+    border: 1px solid #c2eadd;
+    margin-right: 5px;
+    white-space: nowrap;
+    display: inline-flex;
+    align-items: center;
+}

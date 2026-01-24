@@ -3,12 +3,14 @@
 require_once 'includes/config-handler.php';
 require_once 'includes/git-handler.php';
 require_once 'includes/deploy-handler.php';
+require_once 'includes/task-handler.php'; // NEW
 
 // Initialize handlers
 $configHandler = new ConfigHandler();
 $config = $configHandler->loadConfig();
 $gitHandler = new GitHandler($config);
 $deployHandler = new DeployHandler($config);
+$taskHandler = new TaskHandler(); // NEW
 
 // Handle AJAX requests
 if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action'])) {
@@ -36,6 +38,31 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action'])) {
             
         case 'downloadReadme':
             $deployHandler->downloadReadme($_POST['project'], $_POST['version'], $_POST['content']);
+            exit;
+
+        // NEW: Task Board Save/Load
+        case 'saveTasks':
+            $tasksRaw = isset($_POST['tasks']) ? $_POST['tasks'] : '[]';
+            $tasks = json_decode($tasksRaw, true) ?: [];
+            $result = $taskHandler->saveTasks($tasks);
+            echo json_encode($result);
+            exit;
+
+        case 'getTasks':
+            $tasks = $taskHandler->loadTasks();
+            echo json_encode(['success' => true, 'tasks' => $tasks]);
+            exit;
+
+        case 'saveDraft':
+            $draftRaw = isset($_POST['draft']) ? $_POST['draft'] : 'null';
+            $draft = json_decode($draftRaw, true);
+            $result = $taskHandler->saveDraft($draft);
+            echo json_encode($result);
+            exit;
+
+        case 'getDraft':
+            $draft = $taskHandler->loadDraft();
+            echo json_encode(['success' => true, 'draft' => $draft]);
             exit;
     }
 }
@@ -288,6 +315,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'GET') {
             <div class="card-header card-header-custom d-flex justify-content-between align-items-center">
                 <span><i class="fas fa-tasks"></i> Task Board (รายการที่ต้องทำ)</span>
                 <div>
+                    <button type="button" class="btn btn-sm btn-outline-light mr-2" id="toggleTaskHistoryBtn" title="ดูประวัติงานที่เสร็จแล้ว">
+                        <i class="fas fa-history"></i> History
+                    </button>
                     <button type="button" class="btn btn-sm btn-outline-light mr-2" id="toggleTaskBoardBtn" title="พับเก็บ/เปิดออก">
                         <i class="fas fa-chevron-up"></i>
                     </button>
@@ -297,16 +327,47 @@ if ($_SERVER['REQUEST_METHOD'] == 'GET') {
                 </div>
             </div>
             <div class="card-body">
+                <!-- NEW: Task History Panel (Initially Hidden) -->
+                <div id="taskHistoryPanel" class="task-history-container mb-4" style="display: none;">
+                    <div class="d-flex justify-content-between align-items-center mb-3 border-bottom pb-2">
+                        <div class="d-flex align-items-center">
+                            <h6 class="mb-0 text-primary mr-3"><i class="fas fa-check-circle"></i> ประวัติงานที่เสร็จแล้ว (History)</h6>
+                            <select class="form-control form-control-sm" id="historyLimit" style="width: 130px; border-radius: 8px;">
+                                <option value="5" selected>แสดง 5 รายการ</option>
+                                <option value="10">แสดง 10 รายการ</option>
+                                <option value="30">แสดง 30 รายการ</option>
+                                <option value="50">แสดง 50 รายการ</option>
+                                <option value="all">แสดงทั้งหมด</option>
+                            </select>
+                        </div>
+                        <span class="badge badge-pill badge-success" id="completedTasksCount">0 รายการ</span>
+                    </div>
+                    <div id="taskHistoryList" class="task-history-list">
+                        <!-- History items will be injected here -->
+                    </div>
+                </div>
+
                 <!-- Row 1: Main Task Info -->
-                <div class="row g-2 mb-3 align-items-end">
-                    <div class="col-md-6">
-                        <div class="floating-label mb-0">
+                <div class="row g-2 mb-3 align-items-start">
+                    <div class="col-md-9">
+                        <div class="floating-label mb-3">
                             <input type="text" class="form-control form-control-custom" id="oetTaskName" placeholder=" ">
-                            <label>รายการที่ต้องทำ...</label>
+                            <label>รายการที่ต้องทำ (Task Name)...</label>
+                        </div>
+                        
+                        <!-- NEW: Multi-Project Selection -->
+                        <div class="project-selection-wrapper p-3 border rounded shadow-sm bg-light mb-3">
+                            <label class="d-block mb-2 font-weight-bold text-primary" style="font-size: 0.9rem;">
+                                <i class="fas fa-project-diagram mr-1"></i> เลือกโปรเจ็คที่เกี่ยวข้อง (เลือกได้หลายรายการ):
+                            </label>
+                            <div class="d-flex flex-wrap" id="taskProjectList" style="gap: 15px;">
+                                <!-- Checkboxes will be injected here via JS -->
+                                <div class="text-muted small italic">กำลังโหลดรายการโปรเจ็ค...</div>
+                            </div>
                         </div>
                     </div>
-                    <div class="col-md-3">
-                        <div class="floating-label mb-0">
+                    <div class="col-md-3 align-self-start">
+                        <div class="floating-label mb-3">
                             <select class="form-control form-control-custom" id="ocmTaskPriority">
                                 <option value="low" selected>Low (ทั่วไป)</option>
                                 <option value="medium">Medium (สำคัญ)</option>
@@ -314,10 +375,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'GET') {
                             </select>
                             <label>Priority...</label>
                         </div>
-                    </div>
-                    <div class="col-md-3">
-                        <button type="button" class="btn btn-primary-custom btn-block py-2 h-100" id="btnAddTask" style="min-height: 52px;">
-                            <i class="fas fa-plus"></i> เพิ่มรายการ
+                        <button type="button" class="btn btn-primary-custom btn-block py-2" id="btnAddTask" style="min-height: 52px; border-radius: 12px;">
+                            <i class="fas fa-plus"></i> เพิ่มรายการงาน
                         </button>
                     </div>
                 </div>
@@ -498,6 +557,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'GET') {
                 <div class="card-header card-header-custom d-flex justify-content-between align-items-center">
                     <span><i class="fas fa-sticky-note"></i> Deploy Notes & Documentation</span>
                     <div>
+                        <button type="button" class="btn btn-info-custom btn-sm py-2 px-3 mr-1" id="loadFromTaskBoardBtn" style="border-radius: 8px;">
+                            <i class="fas fa-tasks"></i> โหลดจาก Task Board
+                        </button>
                         <button type="button" class="btn btn-warning-custom btn-sm py-2 px-3 mr-1" id="loadTemplateBtn" style="border-radius: 8px;">
                             <i class="fas fa-file-import"></i> Load Template
                         </button>
@@ -510,21 +572,21 @@ if ($_SERVER['REQUEST_METHOD'] == 'GET') {
                     <div class="row mb-3">
                         <div class="col-md-6">
                             <label><i class="fas fa-clipboard-list"></i> ปัญหา (Problems):</label>
-                            <textarea class="form-control form-control-custom" id="problemsText" rows="4" placeholder="- เอกสารใบรับโอน - คลังสินค้า เมื่อบันทึกเอกสาร ข้อมูลอ้างอิงเอกสารจ่ายโอนหายไป"></textarea>
+                            <textarea class="form-control form-control-custom" id="problemsText" rows="4" placeholder=""></textarea>
                         </div>
                         <div class="col-md-6">
                             <label><i class="fas fa-tools"></i> แก้ไข (Solutions):</label>
-                            <textarea class="form-control form-control-custom" id="solutionsText" rows="4" placeholder="- เอกสารใบรับโอน - คลังสินค้า ปรับให้ กดบันทึกแล้วให้ส่งข้อมูลอ้างอิงเอกสารไปด้วย"></textarea>
+                            <textarea class="form-control form-control-custom" id="solutionsText" rows="4" placeholder=""></textarea>
                         </div>
                     </div>
                     <div class="row mb-3">
                         <div class="col-md-6">
                             <label><i class="fas fa-cogs"></i> การตั้งค่า (Config):</label>
-                            <textarea class="form-control form-control-custom" id="configText" rows="2" placeholder="- ไม่มี"></textarea>
+                            <textarea class="form-control form-control-custom" id="configText" rows="2" placeholder=""></textarea>
                         </div>
                         <div class="col-md-6">
                             <label><i class="fas fa-comment"></i> หมายเหตุ (Remarks):</label>
-                            <textarea class="form-control form-control-custom" id="remarksText" rows="2" placeholder="หมายเหตุเพิ่มเติม..."></textarea>
+                            <textarea class="form-control form-control-custom" id="remarksText" rows="2" placeholder=""></textarea>
                         </div>
                     </div>
                     <div class="form-group">
@@ -827,21 +889,214 @@ if ($_SERVER['REQUEST_METHOD'] == 'GET') {
         <i class="fas fa-radio"></i>
     </div>
 
+    <!-- NEW: Edit Task Modal -->
+    <div class="modal fade" id="modalEditTask" tabindex="-1" role="dialog" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered" role="document">
+            <div class="modal-content border-0 shadow-lg" style="border-radius: 20px; overflow: hidden;">
+                <div class="modal-header bg-primary-custom text-white border-0 py-3">
+                    <h5 class="modal-title font-weight-bold"><i class="fas fa-edit mr-2"></i> แก้ไขรายการงาน (Edit Task)</h5>
+                    <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body p-4 bg-light">
+                    <input type="hidden" id="editTaskId">
+                    
+                    <div class="row g-3">
+                        <div class="col-md-9">
+                            <div class="form-group mb-4">
+                                <label class="small font-weight-bold text-muted mb-1 ml-1">ชื่อรายการงาน (Task Name):</label>
+                                <input type="text" class="form-control form-control-lg shadow-sm border-0" id="editTaskName" style="border-radius: 12px; font-size: 1rem;">
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="form-group mb-4">
+                                <label class="small font-weight-bold text-muted mb-1 ml-1">ความสำคัญ (Priority):</label>
+                                <select class="form-control form-control-lg shadow-sm border-0" id="editTaskPriority" style="border-radius: 12px; font-size: 1rem;">
+                                    <option value="low">Low (ทั่วไป)</option>
+                                    <option value="medium">Medium (สำคัญ)</option>
+                                    <option value="high">High (เร่งด่วน)</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <div class="form-group mb-4">
+                                <label class="small font-weight-bold text-muted mb-1 ml-1">Ref Sheet (URL):</label>
+                                <input type="text" class="form-control shadow-sm border-0" id="editTaskUrl" style="border-radius: 10px;">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group mb-4">
+                                <label class="small font-weight-bold text-muted mb-1 ml-1">Note (บันทึกย่อ):</label>
+                                <input type="text" class="form-control shadow-sm border-0" id="editTaskNote" style="border-radius: 10px;">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-group mb-4">
+                        <label class="small font-weight-bold text-primary mb-2 ml-1 d-block">
+                            <i class="fas fa-project-diagram mr-1"></i> โปรเจ็คที่เกี่ยวข้อง (Project Selection):
+                        </label>
+                        <div class="project-selection-wrapper p-3 border-0 shadow-sm bg-white" style="border-radius: 15px;">
+                            <div class="d-flex flex-wrap" id="editTaskProjectList" style="gap: 12px;">
+                                <!-- Checkboxes injected via JS -->
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-group mb-4">
+                        <label class="small font-weight-bold text-muted mb-1 ml-1">รายละเอียดการดำเนินการ (Details):</label>
+                        <textarea class="form-control shadow-sm border-0" id="editTaskDetails" rows="4" style="border-radius: 15px;" placeholder="ระบุการทำงานหรือรายละเอียดเพิ่มเติม..."></textarea>
+                    </div>
+
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <div class="form-group mb-0">
+                                <label class="small font-weight-bold text-muted mb-1 ml-1"><i class="fas fa-calendar-altmr-1"></i> วันที่คาดว่าเสร็จ / เสร็จจริง:</label>
+                                <input type="date" class="form-control shadow-sm border-0" id="editTaskDate" style="border-radius: 10px;">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group mb-0">
+                                <label class="small font-weight-bold text-muted mb-1 ml-1">สถานะ Phase (Phases Status):</label>
+                                <div class="d-flex" style="gap: 10px;" id="editTaskPhaseGroup">
+                                    <button class="phase-btn flex-fill py-2" data-phase="phaseFunc">Function</button>
+                                    <button class="phase-btn flex-fill py-2" data-phase="phaseScript">Script</button>
+                                    <button class="phase-btn flex-fill py-2" data-phase="phaseTest">Testing</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer bg-white border-0 p-3">
+                    <button type="button" class="btn btn-secondary-custom px-4" data-dismiss="modal" style="border-radius: 10px;">ยกเลิก</button>
+                    <button type="button" class="btn btn-primary-custom px-5 font-weight-bold" id="btnSaveEditTask" style="border-radius: 10px;">
+                        <i class="fas fa-save mr-2"></i> บันทึกการแก้ไข
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- NEW: Modal Load from Task Board -->
+    <div class="modal fade" id="modalLoadTask" tabindex="-1" role="dialog" aria-hidden="true">
+        <div class="modal-dialog modal-xl modal-dialog-centered" role="document">
+            <div class="modal-content border-0 shadow-lg" style="border-radius: 20px; overflow: hidden;">
+                <div class="modal-header bg-info-custom text-white border-0 py-3">
+                    <h5 class="modal-title font-weight-bold"><i class="fas fa-tasks mr-2"></i> โหลดรายการงานจาก Task Board</h5>
+                    <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body p-4 bg-light">
+                    <!-- Filters Section -->
+                    <div class="row g-3 mb-4 p-3 bg-white shadow-sm" style="border-radius: 15px;">
+                        <div class="col-md-3">
+                            <label class="small font-weight-bold text-muted mb-1 ml-1">ตั้งแต่วันที่:</label>
+                            <input type="date" class="form-control" id="loadTaskStartDate" style="border-radius: 10px;">
+                        </div>
+                        <div class="col-md-3">
+                            <label class="small font-weight-bold text-muted mb-1 ml-1">ถึงวันที่:</label>
+                            <input type="date" class="form-control" id="loadTaskEndDate" style="border-radius: 10px;">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="small font-weight-bold text-muted mb-1 ml-1">กรองตามโปรเจ็ค:</label>
+                            <select class="form-control" id="loadTaskProjectFilter" style="border-radius: 10px;">
+                                <option value="all">-- ทั้งหมด --</option>
+                                <?php foreach ($config['projects'] as $name => $path): ?>
+                                    <option value="<?= htmlspecialchars($name) ?>"><?= htmlspecialchars($name) ?></option>
+                                <?php endforeach; ?>
+                            </select>
+                        </div>
+                        <div class="col-md-2 align-self-end">
+                            <button type="button" class="btn btn-primary-custom btn-block" id="btnFilterImportTasks" style="border-radius: 10px;">
+                                <i class="fas fa-search"></i> ค้นหา
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Task List Section -->
+                    <div class="table-responsive bg-white shadow-sm" style="border-radius: 15px; max-height: 400px; overflow-y: auto;">
+                        <table class="table table-hover mb-0">
+                            <thead class="bg-primary-custom text-white">
+                                <tr>
+                                    <th width="40" class="text-center">
+                                        <div class="custom-control custom-checkbox">
+                                            <input type="checkbox" class="custom-control-input" id="checkAllTasksImport">
+                                            <label class="custom-control-label" for="checkAllTasksImport"></label>
+                                        </div>
+                                    </th>
+                                    <th width="150">โปรเจ็ค</th>
+                                    <th>หัวข้องาน (Task Name)</th>
+                                    <th width="80" class="text-center">ความสำคัญ</th>
+                                    <th width="140" class="text-center">วันที่ทำสำเร็จ</th>
+                                </tr>
+                            </thead>
+                            <tbody id="importTasksTableBody">
+                                <!-- Tasks will be injected here via JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                    <div id="noTasksFoundMessage" class="text-center py-5" style="display: none;">
+                        <i class="fas fa-folder-open fa-3x text-muted mb-3"></i>
+                        <p class="text-muted">ไม่พบรายการงานที่ตรงตามเงื่อนไข</p>
+                    </div>
+                </div>
+                <div class="modal-footer bg-white border-0 p-3">
+                    <div class="mr-auto ml-3">
+                        <span class="badge badge-info py-2 px-3" id="importTaskCount">เลือก 0 รายการ</span>
+                    </div>
+                    <button type="button" class="btn btn-secondary-custom px-4" data-dismiss="modal" style="border-radius: 10px;">ยกเลิก</button>
+                    <button type="button" class="btn btn-info-custom px-5 font-weight-bold" id="btnConfirmImportTasks" style="border-radius: 10px;">
+                        <i class="fas fa-file-import mr-2"></i> โหลดเข้า Deploy Notes
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- NEW: Sub-Modal for Task Solution -->
+    <div class="modal fade" id="modalImportTaskSolution" tabindex="-1" role="dialog" aria-hidden="true" style="z-index: 1060;">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+            <div class="modal-content border-0 shadow-lg" style="border-radius: 20px;">
+                <div class="modal-header bg-dark text-white border-0 py-3">
+                    <h6 class="modal-title font-weight-bold"><i class="fas fa-tools mr-2"></i> ระบุการแก้ไข (Solution)</h6>
+                    <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body p-4">
+                    <input type="hidden" id="importTaskSolId">
+                    <div class="mb-3">
+                        <label class="small font-weight-bold text-muted d-block mb-1">หัวข้องาน:</label>
+                        <div id="importTaskSolName" class="p-2 bg-light rounded font-weight-bold" style="font-size: 0.9rem;"></div>
+                    </div>
+                    <div class="form-group mb-0">
+                        <label class="small font-weight-bold text-primary d-block mb-2">รายละเอียดการแก้ไข (Solutions Description):</label>
+                        <textarea class="form-control border-0 shadow-sm" id="importTaskSolText" rows="6" style="border-radius: 15px; background: #f8fafc;" placeholder="ระบุว่าแก้ไขอย่างไร..."></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer border-0 p-3">
+                    <button type="button" class="btn btn-secondary-custom px-4" data-dismiss="modal">ยกเลิก</button>
+                    <button type="button" class="btn btn-primary-custom px-4" id="btnSaveImportTaskSol">ตกลง</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <div class="radio-player-panel" id="radioPlayerPanel">
         <div class="radio-header">
-            <h5><i class="fas fa-broadcast-tower mr-2"></i> MCOT Radio Online</h5>
+            <h5><i class="fas fa-broadcast-tower mr-2"></i>Radio Online</h5>
             <button type="button" class="close" id="closeRadioPanel">&times;</button>
         </div>
         
         <select class="radio-station-select" id="radioStationSelect">
-            <option value="https://stream.zeno.fm/0r0ae98u9u9uv">Lofi Girl (Chill Focus ☕)</option>
-            <option value="https://ice1.somafm.com/groovesalad-256-mp3">SomaFM - Groove Salad (Ambient)</option>
-            <option value="https://stream.openbroadcast.ch/320.mp3">Open Broadcast (Swiss Music)</option>
             <option value="http://as-hls-ww-live.akamaized.net/pool_01505109/live/ww/bbc_radio_one/bbc_radio_one.isml/bbc_radio_one-audio%3d96000.norewind.m3u8">BBC Radio 1 (UK Pop)</option>
             <option value="http://as-hls-ww-live.akamaized.net/pool_74208725/live/ww/bbc_radio_two/bbc_radio_two.isml/bbc_radio_two-audio%3d96000.norewind.m3u8">BBC Radio 2 (UK Classic)</option>
             <option value="http://as-hls-ww-live.akamaized.net/pool_55057080/live/ww/bbc_radio_fourfm/bbc_radio_fourfm.isml/bbc_radio_fourfm-audio%3d96000.norewind.m3u8">BBC Radio 4 (UK News)</option>
-            <option value="https://rstream.mcot.net/live/fm95/playlist.m3u8">MCOT FM 95 (Thai Lookup)</option>
-            <option value="https://rstream.mcot.net/live/fm107/playlist.m3u8">MCOT MET 107 (Thai Pop)</option>
         </select>
 
         <div class="radio-controls">

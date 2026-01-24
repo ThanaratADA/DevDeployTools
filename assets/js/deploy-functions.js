@@ -11,6 +11,10 @@
     // ========================================
     let selectedCommits = [];
     let currentProject = '';
+    let saveDraftTimer = null; // NEW: สำหรับหน่วงเวลาการเซฟ Draft
+    let filteredImportTasks = []; // NEW: เก็บรายการ Task ที่กรองมาเพื่อ Import
+    let importTaskSolutions = {}; // NEW: เก็บ Solution ที่พิมพ์แยกตอน Import (Key=ID, Value=Text)
+    let selectedImportTaskIds = []; // NEW: เก็บ ID งานที่เลือกไว้เพื่อ persistence
 
     // ========================================
     // 2. INITIALIZATION
@@ -38,6 +42,29 @@
 
         // Download readme button
         $('#downloadReadmeBtn').on('click', handleDownloadReadme);
+
+        // Load from Task Board button (Modified to open MODAL instead of auto-loading)
+        $(document).on('click', '#loadFromTaskBoardBtn', function (e) {
+            e.preventDefault();
+            // trigger the logic inside our Task Board module
+            if (typeof $('#loadFromTaskBoardBtn').click === 'function') {
+                // Ensure default dates if empty
+                if (!$('#loadTaskStartDate').val()) {
+                    const today = new Date().toISOString().split('T')[0];
+                    $('#loadTaskStartDate').val(today);
+                    $('#loadTaskEndDate').val(today);
+                }
+                if (currentProject) $('#loadTaskProjectFilter').val(currentProject);
+
+                // Call the render function we defined in the Task Board scope
+                // Since it's inside a closure, we trigger the click on the same button 
+                // but we need to prevent recursion if we use the same ID.
+                // However, the new logic we added later in the file is also bound to this ID.
+                // To be safe, just open the modal and call the render function.
+                $('#modalLoadTask').modal('show');
+                // The filterAndRenderImportTasks will be called by the other listener
+            }
+        });
 
         // Refresh history button
         $('#refreshHistoryBtn').on('click', handleRefreshHistory);
@@ -476,6 +503,55 @@
     }
 
     // ========================================
+    // 8.1 LOAD FROM TASK BOARD HANDLER
+    // ========================================
+    function handleLoadTasksFromBoard() {
+        try {
+            const tasksJson = localStorage.getItem('ada_deploy_tasks');
+            if (!tasksJson || tasksJson === '[]') {
+                showAlert('warning', 'ไม่พบรายการงานใน Task Board (กรุณาเพิ่มงานก่อน)');
+                return;
+            }
+
+            let tasks = JSON.parse(tasksJson);
+            const completedTasks = tasks.filter(t => t.completed === true);
+
+            if (completedTasks.length === 0) {
+                showAlert('warning', 'ไม่พบรายการงานที่ "ติ๊กถูก" ใน Task Board');
+                return;
+            }
+
+            let taskTexts = completedTasks.map(t => {
+                let line = `- ${t.name}`;
+                if (t.details && t.details.trim() !== "") {
+                    line += `: ${t.details.trim()}`;
+                }
+                return line;
+            });
+
+            const newText = taskTexts.join('\n');
+            const $problemsField = $('#problemsText');
+
+            const currentVal = $problemsField.val().trim();
+            if (currentVal) {
+                $problemsField.val(currentVal + '\n' + newText);
+            } else {
+                $problemsField.val(newText);
+            }
+
+            showAlert('success', `โหลดงานจาก Task Board สำเร็จ (${completedTasks.length} รายการ)`);
+
+            if (typeof updateDeployNotes === 'function') {
+                updateDeployNotes();
+            }
+
+        } catch (err) {
+            console.error('Error loading tasks:', err);
+            showAlert('danger', 'เกิดข้อผิดพลาด: ' + err.message);
+        }
+    }
+
+    // ========================================
     // 9. UPDATE DEPLOY NOTES
     // ========================================
     function updateDeployNotes() {
@@ -700,16 +776,55 @@
             commitsLimit: $('#commitsLimit').val()
         };
 
+        // 1. เก็บไว้ที่ LocalStorage ก่อน (Backup)
         localStorage.setItem('deployToolFormData', JSON.stringify(formData));
+
+        // 2. ส่งไปบันทึกที่ Server แบบ Debounce (รอหยุดพิมพ์ 2 วินาทีค่อยเซฟ)
+        if (saveDraftTimer) clearTimeout(saveDraftTimer);
+        saveDraftTimer = setTimeout(function () {
+            $.ajax({
+                url: '',
+                method: 'POST',
+                data: {
+                    action: 'saveDraft',
+                    draft: JSON.stringify(formData) // ส่งเป็น JSON String
+                },
+                success: function () {
+                    console.log('Draft saved to server');
+                }
+            });
+        }, 2000);
     }
 
     function loadSavedData() {
-        const savedData = localStorage.getItem('deployToolFormData');
-        if (!savedData) return;
+        // 1. ลองโหลดจาก Server ก่อน
+        $.ajax({
+            url: '',
+            method: 'POST',
+            data: { action: 'getDraft' },
+            dataType: 'json',
+            success: function (response) {
+                if (response.success && response.draft) {
+                    applyFormData(response.draft);
+                    showAlert('info', 'โหลดข้อมูลร่าง (Draft) จาก Server แล้ว', 3000);
+                } else {
+                    // 2. ถ้าไม่มีงานใน Server ลองโหลดจาก LocalStorage (Migration / Fallback)
+                    const savedData = localStorage.getItem('deployToolFormData');
+                    if (savedData) {
+                        applyFormData(JSON.parse(savedData));
 
+                        // NEW: ทำการ Migration ข้อมูลขึ้น Server ทันที
+                        saveFormData();
+                        showAlert('success', 'ย้ายข้อมูลร่างจาก Browser เข้าสู่ Server สำเร็จ', 4000);
+                    }
+                }
+            }
+        });
+    }
+
+    function applyFormData(formData) {
+        if (!formData) return;
         try {
-            const formData = JSON.parse(savedData);
-
             if (formData.project) $('#projectSelect').val(formData.project).trigger('change');
             if (formData.version) $('input[name="version"]').val(formData.version);
             if (formData.filesList) $('#filesList').val(formData.filesList);
@@ -728,15 +843,18 @@
 
             // Load commits limit
             if (formData.commitsLimit) $('#commitsLimit').val(formData.commitsLimit);
-
-            showAlert('info', 'โหลดข้อมูลที่บันทึกไว้แล้ว', 3000);
         } catch (e) {
-            console.error('Error loading saved data:', e);
+            console.error('Error applying form data:', e);
         }
     }
 
     function clearSavedData() {
         localStorage.removeItem('deployToolFormData');
+        $.ajax({
+            url: '',
+            method: 'POST',
+            data: { action: 'saveDraft', draft: null }
+        });
     }
 
     // ========================================
@@ -1299,14 +1417,84 @@
     $(function () {
         let tasks = JSON.parse(localStorage.getItem('ada_deploy_tasks') || '[]');
 
+        // ดึงข้อมูลจาก Server เมื่อเริ่มต้น
+        loadTasksFromServer();
+
+        function loadTasksFromServer() {
+            $.ajax({
+                url: '',
+                method: 'POST',
+                data: { action: 'getTasks' },
+                dataType: 'json',
+                success: function (response) {
+                    if (response.success && response.tasks && response.tasks.length > 0) {
+                        tasks = response.tasks;
+                        localStorage.setItem('ada_deploy_tasks', JSON.stringify(tasks));
+                        renderTasks();
+                        renderHistory();
+                        console.log('Tasks synced from server');
+                    } else if (tasks.length > 0) {
+                        // NEW: Migration จากเครื่องสู่ Server
+                        console.log('Migrating local tasks to server...');
+                        saveTasks();
+                        showAlert('success', 'ย้ายรายการ Task Board เข้าสู่ระบบ Folder สำเร็จ', 4000);
+                    }
+                }
+            });
+        }
+
         function saveTasks() {
+            // 1. บันทึกลง LocalStorage (เพื่อความเร็วในฝั่ง Client)
             localStorage.setItem('ada_deploy_tasks', JSON.stringify(tasks));
+
+            // 2. ส่งไปบันทึกที่ Server (เพื่อเก็บลง Folder ตามโครงสร้างที่ต้องการ)
+            $.ajax({
+                url: '',
+                method: 'POST',
+                data: {
+                    action: 'saveTasks',
+                    tasks: JSON.stringify(tasks) // ส่งเป็น JSON String
+                },
+                dataType: 'json',
+                success: function (res) {
+                    if (res.success) {
+                        console.log('Tasks saved to server folders');
+                    }
+                }
+            });
+
             renderTasks();
+            renderHistory();
+        }
+
+        // NEW: Render project checkboxes for new task form
+        function renderProjectCheckboxes() {
+            const container = $('#taskProjectList');
+            const projects = (window.deployConfig && window.deployConfig.projects) ? window.deployConfig.projects : {};
+
+            if (Object.keys(projects).length === 0) {
+                container.html('<div class="text-muted small">ไม่พบรายชื่อโปรเจ็คใน Config</div>');
+                return;
+            }
+
+            let html = '';
+            Object.keys(projects).forEach(projName => {
+                html += `
+                    <label class="project-checkbox-item">
+                        <input type="checkbox" name="taskProjects" value="${projName}">
+                        <span>${projName}</span>
+                    </label>
+                `;
+            });
+            container.html(html);
         }
 
         function renderTasks() {
             const container = $('#taskListContainer');
-            if (tasks.length === 0) {
+            // กรองเอาเฉพาะงานที่ยังไม่เสร็จ (In Progress)
+            const activeTasks = tasks.filter(t => !t.completed);
+
+            if (activeTasks.length === 0) {
                 container.html(`
                     <div class="text-center text-muted py-4">
                         <i class="fas fa-clipboard-list fa-2x mb-2 opacity-50"></i>
@@ -1317,7 +1505,7 @@
             }
 
             let html = '';
-            tasks.sort((a, b) => {
+            activeTasks.sort((a, b) => {
                 const pMap = { high: 3, medium: 2, low: 1 };
                 const pA = pMap[a.priority] || 1;
                 const pB = pMap[b.priority] || 1;
@@ -1327,9 +1515,19 @@
                 const priority = task.priority || 'low';
                 const priorityClass = `priority-${priority}`;
 
+                // Create project badges
+                let projectHtml = '';
+                if (task.projects && task.projects.length > 0) {
+                    projectHtml = '<div class="task-projects mt-1">';
+                    task.projects.forEach(p => {
+                        projectHtml += `<span class="task-project-badge">${p}</span>`;
+                    });
+                    projectHtml += '</div>';
+                }
+
                 html += `
-                    <div class="task-item-modern ${priorityClass} ${task.completed ? 'completed' : ''}" data-id="${task.id}">
-                        <input type="checkbox" class="task-checkbox" ${task.completed ? 'checked' : ''}>
+                    <div class="task-item-modern ${priorityClass}" data-id="${task.id}">
+                        <input type="checkbox" class="task-checkbox">
                         
                         <div class="priority-indicator" title="ปรับความสำคัญ">
                             <span class="priority-dot dot-high ${priority === 'high' ? 'active' : ''}" data-priority="high" title="เร่งด่วน"></span>
@@ -1338,34 +1536,84 @@
                         </div>
 
                         <div class="task-content-wrapper">
-                            <div class="task-text">
-                                <i class="fas fa-check-circle completed-badge"></i>
-                                ${task.name}
-                            </div>
+                            <div class="task-text">${task.name}</div>
+                            ${projectHtml}
                             ${task.note ? `<div class="task-note"><i class="fas fa-info-circle mr-1"></i> ${task.note}</div>` : ''}
                         </div>
                         <div class="task-time">${task.time || ''}</div>
-                        <button class="btn-task-action btn-task-expand" title="รายละเอียดเพิ่มเติม">
-                            <i class="fas fa-chevron-down"></i>
+                        <button class="btn-task-action btn-edit-task" data-id="${task.id}" title="แก้ไขรายการ">
+                            <i class="fas fa-edit"></i>
                         </button>
                         ${task.url ? `<button class="btn-task-action btn-sheet-link" data-url="${task.url}" title="เปิดเอกสารที่เกี่ยวข้อง"><i class="fas fa-file-excel"></i></button>` : ''}
                         <button class="btn-task-action btn-delete-task" title="ลบรายการนี้">
                             <i class="fas fa-times"></i>
                         </button>
+                    </div>
+                `;
+            });
+            container.html(html);
+        }
 
-                        <div class="task-details-panel">
-                            <div class="phase-container">
-                                <button class="phase-btn ${task.phaseFunc ? 'active' : ''}" data-phase="phaseFunc">
-                                    <i class="fas ${task.phaseFunc ? 'fa-check' : 'fa-code'}"></i> Function
-                                </button>
-                                <button class="phase-btn ${task.phaseScript ? 'active' : ''}" data-phase="phaseScript">
-                                    <i class="fas ${task.phaseScript ? 'fa-check' : 'fa-database'}"></i> Script
-                                </button>
-                                <button class="phase-btn ${task.phaseTest ? 'active' : ''}" data-phase="phaseTest">
-                                    <i class="fas ${task.phaseTest ? 'fa-check' : 'fa-vial'}"></i> Testing
-                                </button>
+        function renderHistory() {
+            const container = $('#taskHistoryList');
+            const counter = $('#completedTasksCount');
+            const limit = $('#historyLimit').val(); // '10', '30', '50', 'all'
+
+            const completedTasks = tasks.filter(t => t.completed);
+            counter.text(`${completedTasks.length} รายการ`);
+
+            if (completedTasks.length === 0) {
+                container.html('<div class="text-center text-muted py-3">ยังไม่มีประวัติงานที่ทำเสร็จ</div>');
+                return;
+            }
+
+            // เรียงตามเวลาที่เสร็จล่าสุดขึ้นก่อน
+            completedTasks.sort((a, b) => (b.completedAt || 0) - (a.completedAt || 0));
+
+            // จำกัดจำนวนรายการ
+            let displayTasks = completedTasks;
+            if (limit !== 'all') {
+                displayTasks = completedTasks.slice(0, parseInt(limit));
+            }
+
+            let html = '';
+            displayTasks.forEach(task => {
+                const doneDate = task.completedAt ? new Date(task.completedAt) : null;
+                const dateStr = doneDate ? doneDate.toLocaleDateString('th-TH') : '-';
+                const timeStr = doneDate ? doneDate.toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' }) : '-';
+
+                // Create project badges for history (Horizontal)
+                let projectHtml = '';
+                if (task.projects && task.projects.length > 0) {
+                    projectHtml = '<div class="task-projects">';
+                    task.projects.forEach(p => {
+                        projectHtml += `<span class="task-project-badge" style="font-size: 0.65rem; padding: 1px 6px;">${p}</span>`;
+                    });
+                    projectHtml += '</div>';
+                }
+
+                html += `
+                    <div class="history-task-item" data-id="${task.id}">
+                        <div class="history-task-info">
+                            <div class="history-task-header">
+                                <i class="fas fa-check-circle text-success mr-2"></i> ${task.name}
+                                ${projectHtml}
                             </div>
-                            <textarea class="detail-textarea" placeholder="ระบุรายละเอียดเพิ่มเติม (เช่น สิ่งที่แก้ไขไปแล้ว, ผลการทดสอบ)..." data-id="${task.id}">${task.details || ''}</textarea>
+                            <div class="history-task-meta">
+                                <span title="ลำดับความสำคัญ: ${task.priority.toUpperCase()}">
+                                    <span class="history-priority-dot h-dot-${task.priority}"></span>
+                                </span>
+                                ${task.note ? `<span><i class="fas fa-info-circle"></i> ${task.note}</span>` : ''}
+                                ${task.completedDate ? `<span class="text-success"><i class="fas fa-calendar-check"></i> ${task.completedDate}</span>` : ''}
+                            </div>
+                        </div>
+                        <div class="history-task-time">
+                            <div><i class="fas fa-calendar-alt"></i> ${dateStr}</div>
+                            <div><i class="fas fa-clock"></i> ${timeStr} น.</div>
+                        </div>
+                        <div class="d-flex align-items-center ml-2" style="gap: 5px;">
+                            <button class="btn-edit-task btn btn-link btn-sm p-0 text-secondary" data-id="${task.id}" title="แก้ไข"><i class="fas fa-edit"></i></button>
+                            <button class="btn-task-action btn-delete-task btn-link btn-sm p-0 text-danger" title="ลบ"><i class="fas fa-trash-alt"></i></button>
                         </div>
                     </div>
                 `;
@@ -1384,6 +1632,12 @@
             const priority = priorityInput.val() || 'low';
             const note = noteInput.val().trim();
 
+            // Get selected projects
+            const selectedProjects = [];
+            $('input[name="taskProjects"]:checked').each(function () {
+                selectedProjects.push($(this).val());
+            });
+
             if (!name) return;
 
             const now = new Date();
@@ -1392,10 +1646,13 @@
             tasks.push({
                 id: Date.now(),
                 name: name,
+                projects: selectedProjects, // Collection of projects
                 url: url,
                 priority: priority,
                 note: note,
                 completed: false,
+                createdAt: Date.now(),
+                completedAt: null,
                 time: timeStr,
                 details: '',
                 phaseFunc: false,
@@ -1407,10 +1664,96 @@
             urlInput.val('');
             noteInput.val('');
             priorityInput.val('low');
+
+            // Reset project checkboxes
+            $('input[name="taskProjects"]').prop('checked', false).closest('.project-checkbox-item').removeClass('active');
+
             saveTasks();
         }
 
-        // Add task on button click
+        // Initialize checkboxes in Edit Modal
+        function renderEditModalProjectCheckboxes(task) {
+            const container = $('#editTaskProjectList');
+            const projects = (window.deployConfig && window.deployConfig.projects) ? window.deployConfig.projects : {};
+            let html = '';
+            Object.keys(projects).forEach(projName => {
+                const isChecked = (task.projects || []).includes(projName);
+                html += `
+                    <label class="project-checkbox-item ${isChecked ? 'active' : ''}">
+                        <input type="checkbox" class="edit-modal-project" value="${projName}" ${isChecked ? 'checked' : ''}>
+                        <span>${projName}</span>
+                    </label>
+                `;
+            });
+            container.html(html || '<div class="text-muted small">ไม่พบรายชื่อโปรเจ็ค</div>');
+        }
+
+        function openEditTaskModal(id) {
+            const task = tasks.find(t => t.id == id);
+            if (!task) return;
+
+            $('#editTaskId').val(task.id);
+            $('#editTaskName').val(task.name);
+            $('#editTaskPriority').val(task.priority || 'low');
+            $('#editTaskUrl').val(task.url || '');
+            $('#editTaskNote').val(task.note || '');
+            $('#editTaskDetails').val(task.details || '');
+            $('#editTaskDate').val(task.completedDate || '');
+
+            // Reset and set Phases in Modal
+            $('#editTaskPhaseGroup .phase-btn').each(function () {
+                const phase = $(this).data('phase');
+                $(this).toggleClass('active', !!task[phase]);
+            });
+
+            renderEditModalProjectCheckboxes(task);
+            $('#modalEditTask').modal('show');
+        }
+
+        // Event for opening modal from Edit button
+        $(document).on('click', '.btn-edit-task', function () {
+            const id = $(this).closest('.task-item-modern, .history-task-item').data('id');
+            openEditTaskModal(id);
+        });
+
+        // Toggle Phase in Edit Modal
+        $(document).on('mousedown', '#editTaskPhaseGroup .phase-btn', function () {
+            $(this).toggleClass('active');
+        });
+
+        // Save from Edit Modal
+        $('#btnSaveEditTask').click(function () {
+            const id = $('#editTaskId').val();
+            const taskIndex = tasks.findIndex(t => t.id == id);
+
+            if (taskIndex !== -1) {
+                const task = tasks[taskIndex];
+                task.name = $('#editTaskName').val().trim();
+                task.priority = $('#editTaskPriority').val();
+                task.url = $('#editTaskUrl').val().trim();
+                task.note = $('#editTaskNote').val().trim();
+                task.details = $('#editTaskDetails').val().trim();
+                task.completedDate = $('#editTaskDate').val();
+
+                // Get projects from modal
+                task.projects = [];
+                $('.edit-modal-project:checked').each(function () {
+                    task.projects.push($(this).val());
+                });
+
+                // Get phases from modal
+                $('#editTaskPhaseGroup .phase-btn').each(function () {
+                    const phase = $(this).data('phase');
+                    task[phase] = $(this).hasClass('active');
+                });
+
+                saveTasks();
+                $('#modalEditTask').modal('hide');
+                showAlert('success', 'ปรับปรุงข้อมูลรายการงานแล้ว');
+            }
+        });
+
+        // Add task event
         $('#btnAddTask').click(addTask);
 
         // Add task on Enter key
@@ -1430,11 +1773,213 @@
             }
         });
 
-        // NEW: Toggle task expand
-        $(document).on('click', '.btn-task-expand', function () {
-            const panel = $(this).closest('.task-item-modern').find('.task-details-panel');
-            $(this).toggleClass('active');
-            panel.slideToggle(300);
+        // NEW: Import from Task Board Logic
+        let filteredImportTasks = []; // Declare globally or in a scope accessible by btnConfirmImportTasks
+        function filterAndRenderImportTasks() {
+            const startDate = $('#loadTaskStartDate').val();
+            const endDate = $('#loadTaskEndDate').val();
+            const projectFilter = $('#loadTaskProjectFilter').val();
+
+            const startTimestamp = startDate ? new Date(startDate).setHours(0, 0, 0, 0) : 0;
+            const endTimestamp = endDate ? new Date(endDate).setHours(23, 59, 59, 999) : Infinity;
+
+            filteredImportTasks = tasks.filter(task => {
+                let taskTime = task.completedAt || 0;
+                if (task.completedDate) {
+                    taskTime = new Date(task.completedDate).getTime();
+                }
+
+                const dateMatch = taskTime >= startTimestamp && taskTime <= endTimestamp;
+                let projectMatch = true;
+                if (projectFilter !== 'all') {
+                    projectMatch = task.projects && task.projects.includes(projectFilter);
+                }
+
+                return dateMatch && projectMatch && task.completed;
+            });
+
+            filteredImportTasks.sort((a, b) => {
+                const timeA = a.completedAt || new Date(a.completedDate || 0).getTime();
+                const timeB = b.completedAt || new Date(b.completedDate || 0).getTime();
+                return timeB - timeA;
+            });
+
+            const tbody = $('#importTasksTableBody');
+            tbody.empty();
+            $('#checkAllTasksImport').prop('checked', false);
+            $('#importTaskCount').text('เลือก 0 รายการ');
+
+            if (filteredImportTasks.length === 0) {
+                $('#noTasksFoundMessage').show();
+                $('.table-responsive').hide();
+            } else {
+                $('#noTasksFoundMessage').hide();
+                $('.table-responsive').show();
+
+                filteredImportTasks.forEach(task => {
+                    const doneDate = task.completedDate || (task.completedAt ? new Date(task.completedAt).toISOString().split('T')[0] : '-');
+                    const isChecked = selectedImportTaskIds.includes(task.id.toString());
+
+                    // Create project badges for table
+                    let projectBadgesHtml = '';
+                    if (task.projects && task.projects.length > 0) {
+                        task.projects.forEach(p => {
+                            projectBadgesHtml += `<span class="task-project-badge" style="display:inline-block; margin-bottom: 2px;">${p}</span>`;
+                        });
+                    } else {
+                        projectBadgesHtml = '-';
+                    }
+
+                    tbody.append(`
+                        <tr class="import-row-clickable" data-id="${task.id}" style="cursor: pointer;">
+                            <td class="text-center" onclick="event.stopPropagation();">
+                                <div class="custom-control custom-checkbox">
+                                    <input type="checkbox" class="custom-control-input import-task-check" id="chkImport_${task.id}" value="${task.id}" ${isChecked ? 'checked' : ''}>
+                                    <label class="custom-control-label" for="chkImport_${task.id}"></label>
+                                </div>
+                            </td>
+                            <td style="white-space: nowrap; max-width: 250px; overflow: hidden;">${projectBadgesHtml}</td>
+                            <td class="font-weight-bold">
+                                ${task.name}
+                                <div id="statusSol_${task.id}" class="mt-1">
+                                    ${importTaskSolutions[task.id] ? '<span class="badge badge-success" style="font-size: 0.6rem;"><i class="fas fa-check"></i> ระบุการแก้ไขแล้ว</span>' : '<span class="badge badge-light text-muted" style="font-size: 0.6rem;">คลิกที่นี่เพื่อระบุการแก้ไข (ถ้ามี)</span>'}
+                                </div>
+                            </td>
+                            <td class="text-center">
+                                <span class="history-priority-dot h-dot-${task.priority}" title="ความสำคัญ: ${task.priority.toUpperCase()}"></span>
+                            </td>
+                            <td class="text-center" style="white-space: nowrap;"><small class="font-weight-bold">${doneDate}</small></td>
+                        </tr>
+                    `);
+                });
+
+                updateImportCount(); // Update count initially
+            }
+        }
+
+        $('#loadFromTaskBoardBtn').click(function () {
+            if (!$('#loadTaskStartDate').val()) {
+                const today = new Date().toISOString().split('T')[0];
+                $('#loadTaskStartDate').val(today);
+                $('#loadTaskEndDate').val(today);
+            }
+            if (currentProject) $('#loadTaskProjectFilter').val(currentProject);
+            filterAndRenderImportTasks();
+            $('#modalLoadTask').modal('show');
+        });
+
+        $('#btnFilterImportTasks').click(function () {
+            importTaskSolutions = {}; // Reset solutions when search again
+            filterAndRenderImportTasks();
+        });
+
+        // Open sub-modal to enter solution when click row/task
+        $(document).on('click', '.import-row-clickable', function () {
+            const id = $(this).data('id');
+            const task = filteredImportTasks.find(t => t.id.toString() === id.toString());
+            if (!task) return;
+
+            $('#importTaskSolId').val(task.id);
+            $('#importTaskSolName').text(task.name);
+            $('#importTaskSolText').val(importTaskSolutions[task.id] || '');
+
+            $('#modalImportTaskSolution').modal('show');
+        });
+
+        // Save solution from sub-modal
+        $('#btnSaveImportTaskSol').click(function () {
+            const id = $('#importTaskSolId').val();
+            const solution = $('#importTaskSolText').val().trim();
+
+            if (solution) {
+                importTaskSolutions[id] = solution;
+                $(`#statusSol_${id}`).html('<span class="badge badge-success" style="font-size: 0.6rem;"><i class="fas fa-check"></i> ระบุการแก้ไขแล้ว</span>');
+            } else {
+                delete importTaskSolutions[id];
+                $(`#statusSol_${id}`).html('<span class="badge badge-light text-muted" style="font-size: 0.6rem;">คลิกที่นี่เพื่อระบุการแก้ไข (ถ้ามี)</span>');
+            }
+
+            // Also auto-check the checkbox if solution is entered
+            if (solution) {
+                $(`#chkImport_${id}`).prop('checked', true).trigger('change');
+            }
+
+            $('#modalImportTaskSolution').modal('hide');
+        });
+
+        $(document).on('change', '#checkAllTasksImport', function () {
+            const checked = $(this).prop('checked');
+            $('.import-task-check').each(function () {
+                $(this).prop('checked', checked);
+                const id = $(this).val();
+                if (checked) {
+                    if (!selectedImportTaskIds.includes(id)) selectedImportTaskIds.push(id);
+                } else {
+                    selectedImportTaskIds = selectedImportTaskIds.filter(i => i !== id);
+                }
+            });
+            updateImportCount();
+        });
+
+        $(document).on('change', '.import-task-check', function () {
+            const id = $(this).val();
+            const checked = $(this).prop('checked');
+            if (checked) {
+                if (!selectedImportTaskIds.includes(id)) selectedImportTaskIds.push(id);
+            } else {
+                selectedImportTaskIds = selectedImportTaskIds.filter(i => i !== id);
+            }
+            updateImportCount();
+        });
+
+        function updateImportCount() {
+            // Count from global persistent array
+            const count = selectedImportTaskIds.length;
+            $('#importTaskCount').text(`เลือก ${count} รายการงาน`);
+        }
+
+        $('#btnConfirmImportTasks').click(function () {
+            const selectedItems = [];
+
+            // Get data based on persistent selectedImportTaskIds
+            selectedImportTaskIds.forEach(id => {
+                // Find task object in memory (all tasks)
+                const task = tasks.find(t => t.id.toString() === id.toString());
+                const solValue = importTaskSolutions[id] || '';
+                if (task) {
+                    selectedItems.push({
+                        name: task.name,
+                        solution: solValue
+                    });
+                }
+            });
+
+            if (selectedItems.length === 0) {
+                showAlert('warning', 'กรุณาเลือกรายการงานอย่างน้อย 1 รายการ');
+                return;
+            }
+
+            // เคลียร์ค่าเก่าออกก่อนเพื่อให้เหลือ "เฉพาะ" งานที่เลือกจาก Modal ตามความต้องการของผู้ใช้
+            let problemContent = '';
+            let solutionContent = '';
+
+            selectedItems.forEach(item => {
+                problemContent += `- ${item.name}\n`;
+                if (item.solution) {
+                    solutionContent += `- ${item.solution}\n`;
+                }
+            });
+
+            $('#problemsText').val(problemContent).trigger('input');
+            $('#solutionsText').val(solutionContent).trigger('input');
+
+            $('#modalLoadTask').modal('hide');
+            showAlert('success', `โหลดรายการงาน ${selectedItems.length} รายการ เข้าสู่ช่อง Deploy Notes แล้ว`);
+
+            // เลื่อนหน้าจอไปที่ส่วน Deploy Notes
+            $('html, body').animate({
+                scrollTop: $("#problemsText").offset().top - 100
+            }, 500);
         });
 
         // NEW: Toggle Phase Button
@@ -1442,7 +1987,6 @@
             const id = $(this).closest('.task-item-modern').data('id');
             const phase = $(this).data('phase');
             const task = tasks.find(t => t.id == id);
-
             if (task) {
                 task[phase] = !task[phase];
                 saveTasks();
@@ -1480,13 +2024,14 @@
             const task = tasks.find(t => t.id == id);
             if (task) {
                 task.completed = $(this).prop('checked');
+                task.completedAt = task.completed ? Date.now() : null;
                 saveTasks();
             }
         });
 
         // Delete individual task
         $(document).on('click', '.btn-delete-task', function () {
-            const id = $(this).closest('.task-item-modern').data('id');
+            const id = $(this).closest('.task-item-modern, .history-task-item').data('id');
             tasks = tasks.filter(t => t.id != id);
             saveTasks();
         });
@@ -1513,8 +2058,68 @@
             }
         });
 
+        // Toggle Task History Panel
+        $('#toggleTaskHistoryBtn').click(function () {
+            const panel = $('#taskHistoryPanel');
+            $(this).toggleClass('active');
+            panel.slideToggle(300);
+        });
+
+        // Change project checkbox visual active state
+        $(document).on('change', 'input[name="taskProjects"], .edit-task-project', function () {
+            $(this).closest('.project-checkbox-item').toggleClass('active', $(this).prop('checked'));
+        });
+
+        // NEW: Update Projects for existing task
+        $(document).on('change', '.edit-task-project', function () {
+            const id = $(this).data('id');
+            const val = $(this).val();
+            const checked = $(this).prop('checked');
+            const task = tasks.find(t => t.id == id);
+
+            if (task) {
+                if (!task.projects) task.projects = [];
+                if (checked) {
+                    if (!task.projects.includes(val)) task.projects.push(val);
+                } else {
+                    task.projects = task.projects.filter(p => p !== val);
+                }
+                saveTasks();
+            }
+        });
+
+        // NEW: Update Completion Date for task
+        $(document).on('change', '.edit-task-date', function () {
+            const id = $(this).data('id');
+            const val = $(this).val();
+            const task = tasks.find(t => t.id == id);
+
+            if (task) {
+                task.completedDate = val;
+                saveTasks();
+            }
+        });
+
+        // NEW: Update Note for existing history task
+        $(document).on('change', '.edit-history-note', function () {
+            const id = $(this).data('id');
+            const val = $(this).val();
+            const task = tasks.find(t => t.id == id);
+            if (task) {
+                task.note = val;
+                saveTasks();
+            }
+        });
+
+        // NEW: History Limit Change
+        $('#historyLimit').change(function () {
+            renderHistory();
+        });
+
         // Initialize
+        renderProjectCheckboxes();
         renderTasks();
+        renderHistory();
     });
 
 })();

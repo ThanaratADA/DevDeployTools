@@ -24,7 +24,22 @@ Desktop.ini
 *.sublime-project
 *.sublime-workspace
 
+# Data Storage (Tasks, Drafts and Database files)
+/DataBase/
+/Task/
+
 # Backup files
 *.bak
 *.backup
 *~
+*.swp
+
+# PHP specific
+composer.lock
+vendor/
+.php_cs.cache
+.phpunit.result.cache
+
+# Logs
+/logs/
+*.log
