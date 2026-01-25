@@ -550,8 +550,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'GET') {
                                 <input type="hidden" id="ocmTaskPriority" value="low">
                             </div>
                             
-                            <button type="button" class="btn btn-primary-custom w-100 font-weight-bold" id="btnAddTask" style="height: 60px; border-radius: 12px; font-size: 1.1rem;">
-                                <i class="fas fa-plus"></i> เพิ่มรายการงาน
+                            <button type="button" class="btn btn-primary-custom w-100 font-weight-bold" id="btnAddTask" style="height: 45px; border-radius: 10px; font-size: 1rem;">
+                                <i class="fas fa-plus"></i> สร้างงาน สร้างอาชีพ
                             </button>
                         </div>
                     </div>
@@ -838,7 +838,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'GET') {
         </div> <!-- End Row -->
 
         <!-- Quick Notes Floating Button -->
-        <button type="button" class="floating-notes-btn" data-toggle="modal" data-target="#quickNotesModal" title="Quick Notes" style="position: fixed; bottom: 100px; right: 30px; width: 60px; height: 60px; border-radius: 50%; background: #ffc107; border: none; color: white; font-size: 1.5rem; box-shadow: 0 4px 15px rgba(255, 193, 7, 0.4); z-index: 1050; transition: transform 0.2s;">
+        <button type="button" class="floating-notes-btn" data-toggle="modal" data-target="#quickNotesModal" title="Quick Notes">
             <i class="fas fa-sticky-note"></i>
         </button>
 
