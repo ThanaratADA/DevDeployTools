@@ -10,7 +10,7 @@
         "serverTier": "DEV",
         "sheetType": "Work",
         "meetingType": "Team",
-        "customBgColor": "#56cae1",
+        "customBgColor": "#2dc62a",
         "order": 0
     },
     {
@@ -24,7 +24,7 @@
         "serverTier": "DEV",
         "sheetType": "Work",
         "meetingType": "Private",
-        "customBgColor": "#c991e3",
+        "customBgColor": "#2dc62a",
         "order": 1
     },
     {
@@ -38,7 +38,7 @@
         "serverTier": "DEV",
         "sheetType": "Work",
         "meetingType": "Dev",
-        "customBgColor": "#f07575",
+        "customBgColor": "#2dc62a",
         "order": 2
     },
     {
@@ -52,8 +52,8 @@
         "serverTier": "DEV",
         "sheetType": "Work",
         "meetingType": "Private",
-        "customBgColor": "#78cf59",
-        "order": 0
+        "customBgColor": "#ff0088",
+        "order": 5
     },
     {
         "id": "1769285357713",
@@ -66,8 +66,8 @@
         "serverTier": "DEV",
         "sheetType": "Knowledge",
         "meetingType": "Private",
-        "customBgColor": "#bdd129",
-        "order": 1
+        "customBgColor": "#51d8ff",
+        "order": 3
     },
     {
         "id": "1769285435593",
@@ -80,8 +80,8 @@
         "serverTier": "DEV",
         "sheetType": "Center",
         "meetingType": "Private",
-        "customBgColor": "#72dab2",
-        "order": 2
+        "customBgColor": "#a052ff",
+        "order": 0
     },
     {
         "id": "1769285670003",
@@ -94,8 +94,8 @@
         "serverTier": "DEV",
         "sheetType": "Knowledge",
         "meetingType": "Private",
-        "customBgColor": "#e1bb51",
-        "order": 3
+        "customBgColor": "#51d8ff",
+        "order": 2
     },
     {
         "id": "1769285916002",
@@ -108,7 +108,7 @@
         "serverTier": "DEV",
         "sheetType": "Work",
         "meetingType": "Private",
-        "customBgColor": "#f06a6a",
+        "customBgColor": "#51d8ff",
         "order": 4
     },
     {
@@ -400,5 +400,47 @@
         "sheetType": "Work",
         "meetingType": "Private",
         "order": 3
+    },
+    {
+        "id": "1769300529281",
+        "category": "other",
+        "title": "License & Report",
+        "url": "https:\/\/docs.google.com\/spreadsheets\/d\/1F5MdOseyAe1wZt8XMRKr1yOjDr1UZSSQ-0ug7o1SZS8\/edit?gid=1264741822#gid=1264741822",
+        "credentials": [],
+        "user": "",
+        "pass": "",
+        "serverTier": "DEV",
+        "sheetType": "Work",
+        "meetingType": "Private",
+        "customBgColor": "#a052ff",
+        "order": 1
+    },
+    {
+        "id": "1769309524345",
+        "category": "other",
+        "title": "Perplexity.AI",
+        "url": "https:\/\/www.perplexity.ai\/",
+        "credentials": [],
+        "user": "",
+        "pass": "",
+        "serverTier": "DEV",
+        "sheetType": "Work",
+        "meetingType": "Private",
+        "customBgColor": "#ff0088",
+        "order": 999
+    },
+    {
+        "id": 1769309582294,
+        "category": "other",
+        "title": "Chatgpt.AI",
+        "url": "https:\/\/chatgpt.com\/",
+        "credentials": [],
+        "user": "",
+        "pass": "",
+        "serverTier": "DEV",
+        "sheetType": "Work",
+        "meetingType": "Private",
+        "customBgColor": "#ff0088",
+        "order": 999
     }
 ]

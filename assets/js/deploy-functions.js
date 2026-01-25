@@ -1766,6 +1766,7 @@
                             <div><i class="fas fa-clock"></i> ${timeStr} น.</div>
                         </div>
                         <div class="d-flex align-items-center ml-2" style="gap: 5px;">
+                            <button class="btn-restore-task btn btn-link btn-sm p-0 text-primary" data-id="${task.id}" title="ย้ายงานกลับมายัง Task Board"><i class="fas fa-undo"></i></button>
                             <button class="btn-edit-task btn btn-link btn-sm p-0 text-secondary" data-id="${task.id}" title="แก้ไข"><i class="fas fa-edit"></i></button>
                             <button class="btn-task-action btn-delete-task btn-link btn-sm p-0 text-danger" title="ลบ"><i class="fas fa-trash-alt"></i></button>
                         </div>
@@ -1962,6 +1963,24 @@
                 handleStatusChange(id, 'doing');
             } else {
                 handleStatusChange(id, type);
+            }
+        });
+
+        // NEW: Restore Task from History (ย้ายกลับมา Task Board)
+        $(document).on('click', '.btn-restore-task', function (e) {
+            e.preventDefault();
+            const id = $(this).data('id') || $(this).closest('.history-task-item').data('id');
+            const task = tasks.find(t => t.id == id);
+            if (task) {
+                if (confirm(`ยืนยันการย้ายงาน "${task.name}" กลับไปยัง Task Board หรือไม่?`)) {
+                    task.completed = false;
+                    task.status = 'doing'; // บังคับเป็นสถานะกำลังทำ
+                    task.completedAt = null;
+                    task.completedDate = null;
+
+                    saveTasks(); // บันทึกและ Render ใหม่ทั้ง Board และ History
+                    showAlert('success', 'ย้ายงานกลับมายัง Task Board ปัจจุบันแล้ว 🚀');
+                }
             }
         });
 
