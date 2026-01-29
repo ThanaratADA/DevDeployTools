@@ -9,6 +9,7 @@ require_once 'includes/link-handler.php';
 // Initialize handlers
 $configHandler = new ConfigHandler();
 $config = $configHandler->loadConfig();
+$debug = isset($config['debug']) ? $config['debug'] : false;
 $gitHandler = new GitHandler($config);
 $deployHandler = new DeployHandler($config);
 $taskHandler = new TaskHandler();
@@ -270,6 +271,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'GET') {
     <link rel="stylesheet" href="assets/css/adasoft-theme.css?v=<?php echo time(); ?>">
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
     <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
     <div class="main-container">
@@ -304,6 +306,35 @@ if ($_SERVER['REQUEST_METHOD'] == 'GET') {
 
 
      
+        <!-- NEW: Task Dashboard Panel -->
+        <div class="card card-custom mt-4" id="taskDashboardPanel">
+            <div class="card-header card-header-custom d-flex justify-content-between align-items-center">
+                <span><i class="fas fa-chart-pie"></i> Task Dashboard Summary</span>
+                <button type="button" class="btn btn-sm btn-outline-light" onclick="refreshTaskDashboard()">
+                    <i class="fas fa-sync-alt"></i> Refresh
+                </button>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-5">
+                        <h6 class="text-center mb-3 font-weight-bold text-muted">สถานะงานทั้งหมด</h6>
+                        <div style="height: 250px; position: relative;">
+                            <canvas id="taskStatusChart"></canvas>
+                        </div>
+                    </div>
+                    <div class="col-md-7">
+                        <h6 class="text-center mb-3 font-weight-bold text-muted">งานแยกตามโปรเจ็ค (Completed vs Total)</h6>
+                        <div style="height: 250px; position: relative;">
+                            <canvas id="taskProjectChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+                <div class="row mt-4 justify-content-center" id="taskSummaryStats">
+                    <!-- Stats injected here via JS -->
+                </div>
+            </div>
+        </div>
+
         <div class="card card-custom mt-4" id="linkHubPanel">
             <div class="card-header card-header-custom d-flex justify-content-between align-items-center">
                 <span><i class="fas fa-link"></i> Resource Hub (ศูนย์รวมลิงก์สำคัญ)</span>
@@ -341,35 +372,14 @@ if ($_SERVER['REQUEST_METHOD'] == 'GET') {
             </div>
         </div>
 
-        <!-- Deploy History Panel -->
-        <div class="card card-custom mt-4" id="historyPanel" style="display: none;">
-            <div class="card-header card-header-custom d-flex justify-content-between align-items-center">
-                <span><i class="fas fa-history"></i> Deploy History</span>
-                <div>
-                    <button type="button" class="btn btn-sm btn-outline-light mr-2" id="toggleHistoryBtn" title="พับเก็บ/เปิดออก">
-                        <i class="fas fa-chevron-up"></i>
-                    </button>
-                    <button type="button" class="btn btn-sm btn-outline-light" id="refreshHistoryBtn">
-                        <i class="fas fa-sync-alt"></i> Refresh
-                    </button>
-                </div>
-            </div>
-            <div class="card-body">
-                <div id="deployHistory">
-                    <div class="text-center text-muted">
-                        <i class="fas fa-clock fa-2x mb-3"></i>
-                        <p>เลือกโปรเจ็คเพื่อดู Deploy History</p>
-                    </div>
-                </div>
-            </div>
-        </div>
+
 
         <div class="row">
             <!-- Main Content Area (Full Width) -->
             <div class="col-lg-12">
                 <form id="deployForm" method="POST">
                     <!-- Project & Version Selection -->
-                    <div class="row equal-height-row">
+                    <div class="row equal-height-row" id="panelProjectInfo">
                         <div class="col-lg-6 equal-height-card">
                     <div class="card card-custom">
                         <div class="card-header card-header-custom">
@@ -384,6 +394,36 @@ if ($_SERVER['REQUEST_METHOD'] == 'GET') {
                                         <option value="<?= htmlspecialchars($name) ?>"><?= htmlspecialchars($name) ?></option>
                                     <?php endforeach; ?>
                                 </select>
+                            </div>
+
+                            <!-- Quick Access Buttons (Moved from Drive Links) -->
+                            <div id="quickAccessButtons" style="display: none; margin-top: 15px;">
+                                <div class="d-flex flex-column" style="gap: 10px;">
+                                    <!-- Row 1: Drive Folders (Vibrant Gradients) -->
+                                    <div class="d-flex flex-wrap" style="gap: 10px;">
+                                        <button type="button" class="btn btn-sm btn-custom text-white" id="openXPatchBtn" title="เปิด X-Patch Center" style="flex: 1; min-width: 140px; background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%);">
+                                            <i class="fas fa-external-link-alt"></i> X-Patch
+                                        </button>
+                                        <button type="button" class="btn btn-sm btn-custom text-white" id="openXUpgradeBtn" title="เปิด X-Upgrade Center" style="flex: 1; min-width: 140px; background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);">
+                                            <i class="fas fa-external-link-alt"></i> X-Upgrade
+                                        </button>
+                                        <button type="button" class="btn btn-sm btn-custom text-white" id="openXDatabaseBtn" title="เปิด X-Database Center" style="flex: 1; min-width: 140px; background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);">
+                                            <i class="fas fa-database"></i> X-Database
+                                        </button>
+                                    </div>
+                                    <!-- Row 2: Templates & Sheets (AdaSoft Theme & Success Tones) -->
+                                    <div class="d-flex flex-wrap" style="gap: 10px;">
+                                        <button type="button" class="btn btn-sm btn-custom text-white" id="openUnitTestBtn" title="ดาวน์โหลด Unit Test Template" style="flex: 1; min-width: 140px; background: linear-gradient(135deg, #10b981 0%, #059669 100%);">
+                                            <i class="fas fa-file-excel"></i> Unit Test
+                                        </button>
+                                        <button type="button" class="btn btn-sm btn-custom text-white" id="openVersionHistoryBtn" title="เปิด Version History Sheet" style="flex: 1; min-width: 140px; background: linear-gradient(135deg, #06b6d4 0%, #0891b2 100%);">
+                                            <i class="fas fa-table"></i> History Sheet
+                                        </button>
+                                        <button type="button" class="btn btn-sm btn-custom text-white" id="openLastVersionBtn" title="เปิด Current Version Sheet (View)" style="flex: 1; min-width: 140px; background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);">
+                                            <i class="fas fa-eye"></i> Current Ver
+                                        </button>
+                                    </div>
+                                </div>
                             </div>
 
                             <!-- NEW: Project Selection Status Indicator -->
@@ -585,9 +625,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'GET') {
 
         
 
-            <div class="section-divider"></div>
+            <!-- <div class="section-divider"></div> -->
             <!-- Git Commits & Files Section -->
-            <div class="row equal-height-row">
+            <div class="row equal-height-row" id="panelGitFiles">
                 <div class="col-lg-6 equal-height-card">
                     <div class="card card-custom">
                         <div class="card-header card-header-custom d-flex justify-content-between align-items-center">
@@ -639,7 +679,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'GET') {
                 </div>
             </div>
             <!-- Deploy Notes Section -->
-            <div class="card card-custom">
+            <div class="card card-custom" id="panelDeployNotes">
                 <div class="card-header card-header-custom d-flex justify-content-between align-items-center">
                     <span><i class="fas fa-sticky-note"></i> Deploy Notes & Documentation</span>
                     <div>
@@ -685,44 +725,16 @@ if ($_SERVER['REQUEST_METHOD'] == 'GET') {
                     </div>
                 </div>
             </div>
-            <div class="section-divider"></div>
+            <!-- <div class="section-divider"></div> -->
 
             <!-- Google Drive Links Section -->
-            <div class="card card-custom">
+            <div class="card card-custom" id="panelDriveLinks">
                 <div class="card-header card-header-custom d-flex justify-content-between align-items-center">
                     <div class="d-flex align-items-center">
                         <span class="mr-3"><i class="fab fa-google-drive"></i> Google Drive Links</span>
                         <button type="button" class="btn btn-sm btn-warning-custom btn-icon-round" id="autoFillLinksBtn" title="ดึงลิงก์เริ่มต้น" style="width: 30px; height: 30px; border-radius: 50%; padding: 0; display: flex; align-items: center; justify-content: center; border: 1px solid rgba(255,255,255,0.3); box-shadow: 0 2px 4px rgba(0,0,0,0.2);">
                             <i class="fas fa-rotate-right" style="font-size: 0.8rem;"></i>
                         </button>
-                    </div>
-                    <div id="quickAccessButtons" style="display: none;">
-                        <div class="d-flex flex-column" style="gap: 5px;">
-                            <!-- Row 1: Drive Folders -->
-                            <div class="d-flex" style="gap: 5px;">
-                                <button type="button" class="btn btn-sm btn-outline-light" id="openXPatchBtn" title="เปิด X-Patch Center" style="flex: 1; min-width: 180px;">
-                                    <i class="fas fa-external-link-alt"></i> X-Patch
-                                </button>
-                                <button type="button" class="btn btn-sm btn-outline-light" id="openXUpgradeBtn" title="เปิด X-Upgrade Center" style="flex: 1; min-width: 180px;">
-                                    <i class="fas fa-external-link-alt"></i> X-Upgrade
-                                </button>
-                                <button type="button" class="btn btn-sm btn-outline-light" id="openXDatabaseBtn" title="เปิด X-Database Center" style="flex: 1; min-width: 180px;">
-                                    <i class="fas fa-external-link-alt"></i> X-Database
-                                </button>
-                            </div>
-                            <!-- Row 2: Templates & Sheets -->
-                            <div class="d-flex" style="gap: 5px;">
-                                <button type="button" class="btn btn-sm btn-outline-light" id="openUnitTestBtn" title="ดาวน์โหลด Unit Test Template" style="flex: 1; min-width: 180px;">
-                                    <i class="fas fa-download"></i> Unit Test Template
-                                </button>
-                                <button type="button" class="btn btn-sm btn-outline-light" id="openVersionHistoryBtn" title="เปิด Version History Sheet" style="flex: 1; min-width: 180px;">
-                                    <i class="fas fa-table"></i> Version History
-                                </button>
-                                <button type="button" class="btn btn-sm btn-outline-light" id="openLastVersionBtn" title="เปิด Current Version Sheet (View)" style="flex: 1; min-width: 180px;">
-                                    <i class="fas fa-external-link-alt"></i> Current Version
-                                </button>
-                            </div>
-                        </div>
                     </div>
                 </div>
                 <div class="card-body">
@@ -823,12 +835,35 @@ if ($_SERVER['REQUEST_METHOD'] == 'GET') {
                 </div>
             </div>
 
-            <div class="section-divider"></div>
+            <!-- <div class="section-divider"></div> -->
 
 
+
+            <!-- Deploy History Panel (Moved) -->
+            <div class="card card-custom mt-4" id="historyPanel" style="display: none;">
+                <div class="card-header card-header-custom d-flex justify-content-between align-items-center">
+                    <span><i class="fas fa-history"></i> Deploy History</span>
+                    <div>
+                        <button type="button" class="btn btn-sm btn-outline-light mr-2" id="toggleHistoryBtn" title="พับเก็บ/เปิดออก">
+                            <i class="fas fa-chevron-up"></i>
+                        </button>
+                        <button type="button" class="btn btn-sm btn-outline-light" id="refreshHistoryBtn">
+                            <i class="fas fa-sync-alt"></i> Refresh
+                        </button>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div id="deployHistory">
+                        <div class="text-center text-muted">
+                            <i class="fas fa-clock fa-2x mb-3"></i>
+                            <p>เลือกโปรเจ็คเพื่อดู Deploy History</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
 
             <!-- Deploy Button -->
-            <div class="text-center mt-4">
+            <div class="text-center mt-4" id="deployButtonContainer">
                 <button type="submit" class="btn btn-primary-custom btn-custom btn-lg icon-btn pulse-animation">
                     <i class="fas fa-rocket"></i> Deploy Package
                 </button>
@@ -873,8 +908,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'GET') {
         window.deployConfig = <?= json_encode($config) ?>;
     </script>
     <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
-    <script src="assets/js/deploy-functions.js?v=<?php echo time(); ?>"></script>
-    <script src="assets/js/resource-hub.js?v=<?php echo time(); ?>"></script>
+    <!-- <script src="assets/js/deploy-functions.js?v=<?php echo time(); ?>"></script> -->
+
 
     <script>
     // Unit Test Template Functions (Global)
@@ -1391,6 +1426,20 @@ if ($_SERVER['REQUEST_METHOD'] == 'GET') {
             </div>
         </div>
     </div>
+    <!-- Module Scripts -->
+    <script src="assets/js/resource-hub.js?v=<?php echo time(); ?>"></script>
+    <script src="assets/js/deploy-core.js?v=<?php echo time(); ?>"></script>
+    <script src="assets/js/deploy-git.js?v=<?php echo time(); ?>"></script>
+    <script src="assets/js/deploy-drive.js?v=<?php echo time(); ?>"></script>
+    <script src="assets/js/deploy-templates.js?v=<?php echo time(); ?>"></script>
+    <script src="assets/js/deploy-history.js?v=<?php echo time(); ?>"></script>
+    <script src="assets/js/deploy-widgets.js?v=<?php echo time(); ?>"></script>
+    <script src="assets/js/deploy-tasks-board.js?v=<?php echo time(); ?>"></script>
+    <script src="assets/js/task-dashboard.js?v=<?php echo time(); ?>"></script>
+
+    <?php if ($debug): ?>
+    <script src="assets/js/unittest-helpers.js?v=<?php echo time(); ?>"></script>
+    <?php endif; ?>
 </body>
 </html>
 

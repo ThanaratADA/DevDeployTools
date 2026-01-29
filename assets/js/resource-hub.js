@@ -402,24 +402,49 @@
             });
         });
 
-        // Initialize Sortable
+        // Initialize Sortable Optimized (More Smooth)
         $(".link-list").sortable({
             connectWith: ".link-list",
             placeholder: "ui-sortable-placeholder",
+            opacity: 0.8,           // Slightly more visible
+            distance: 10,           // More distance to confirm intent
+            tolerance: 'pointer',   // Better accuracy
+            cursor: 'grabbing',
+            forcePlaceholderSize: true,
+            helper: 'clone',        // Smoother dragging visually
+            zIndex: 9999,
+            scroll: true,           // Allow scrolling while dragging
+            start: function (event, ui) {
+                ui.placeholder.height(ui.item.outerHeight());
+                ui.item.addClass('is-dragging-item');
+                $(this).addClass('is-sorting-list');
+                // Temporarily disable transitions on all items to prevent jitter
+                $('.link-item-modern').css('transition', 'none');
+            },
+            stop: function (event, ui) {
+                ui.item.removeClass('is-dragging-item');
+                $(this).removeClass('is-sorting-list');
+                // Restore transitions
+                $('.link-item-modern').css('transition', '');
+            },
             update: function (event, ui) {
-                const newOrder = [];
-                $("#linkContainer .link-list").each(function () {
-                    const cat = $(this).data('category');
-                    $(this).find('.link-item-modern').each(function (index) {
-                        const id = $(this).data('id');
-                        const link = centerLinks.find(l => l.id == id);
-                        if (link) {
-                            link.category = cat;
-                            link.order = index;
-                        }
-                    });
-                });
-                saveLinks();
+                // Only process once per movement (ignore the one from the "receiving" side if moving between lists)
+                if (this === ui.item.parent()[0]) {
+                    setTimeout(() => {
+                        $("#linkContainer .link-list").each(function () {
+                            const cat = $(this).data('category');
+                            $(this).find('.link-item-modern').each(function (index) {
+                                const id = $(this).data('id');
+                                const link = centerLinks.find(l => l.id == id);
+                                if (link) {
+                                    link.category = cat;
+                                    link.order = index;
+                                }
+                            });
+                        });
+                        saveLinks();
+                    }, 50);
+                }
             }
         }).disableSelection();
     }
@@ -657,11 +682,15 @@
             showAlert('success', 'บันทึกข้อมูลลิงก์แล้ว');
         });
 
-        // Toggle Panel
-        $('#toggleLinkHubBtn').click(function () {
-            const panel = $('#linkHubPanel .card-body');
+        // Toggle Panel (Robust + Persistence)
+        $(document).on('click', '#toggleLinkHubBtn', function () {
+            const panel = $(this).closest('.card').find('.card-body');
             const icon = $(this).find('i');
-            panel.slideToggle(300);
+            panel.slideToggle(300, function () {
+                if (typeof window.savePanelCollapsedState === 'function') {
+                    window.savePanelCollapsedState('linkHubPanel', !$(this).is(':visible'));
+                }
+            });
             icon.toggleClass('fa-chevron-up fa-chevron-down');
         });
     });

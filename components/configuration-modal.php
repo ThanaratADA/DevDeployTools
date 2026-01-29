@@ -303,6 +303,36 @@
                         </div>
                     </div>
 
+
+                    <!-- ========================================
+                         SECTION 6: PANEL CONFIGURATION (LAYOUT)
+                         ======================================== -->
+                    <div class="card card-custom mb-4">
+                        <div class="card-header card-header-custom">
+                             <i class="fas fa-columns"></i> จัดการหน้าจอ (Layout)
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <h6 class="text-primary font-weight-bold mb-3"><i class="fas fa-th-large"></i> Dashboard Widgets (ส่วนบน)</h6>
+                                    <ul id="sortableTopPanels" class="list-group panel-sortable-list"></ul>
+                                </div>
+                                <div class="col-md-6">
+                                    <h6 class="text-primary font-weight-bold mb-3"><i class="fas fa-tasks"></i> Deploy Workflow (ส่วนฟอร์ม)</h6>
+                                    <ul id="sortableWorkflowPanels" class="list-group panel-sortable-list"></ul>
+                                </div>
+                            </div>
+                             <div class="mt-3">
+                                <small class="text-muted">
+                                    <i class="fas fa-hand-paper"></i> ลากเพื่อจัดลำดับ | 
+                                    <i class="far fa-eye"></i> ติ๊กถูกเพื่อแสดง
+                                </small>
+                                <button type="button" class="btn btn-sm btn-outline-info float-right" onclick="resetPanelLayout()">
+                                    <i class="fas fa-undo"></i> Reset Default
+                                </button>
+                            </div>
+                        </div>
+                    </div>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-dismiss="modal">
@@ -493,9 +523,24 @@ function removeTemplateRow(button) {
 
 // Handle config form submission
 $(document).ready(function() {
+    // Init Sortables
+    $(".panel-sortable-list").sortable({
+        placeholder: "ui-state-highlight",
+        handle: ".drag-handle",
+        forcePlaceholderSize: true
+    }).disableSelection();
+
+    // Load Panel Config when modal opens
+    $('#configModal').on('show.bs.modal', function () {
+        loadPanelConfigIntoModal();
+    });
+
     $('#configForm').on('submit', function(e) {
         e.preventDefault();
         
+        // Save Panel Config to LocalStorage
+        savePanelConfigFromModal();
+
         const formData = $(this).serialize();
         
         $.ajax({
@@ -505,7 +550,7 @@ $(document).ready(function() {
             dataType: 'json',
             success: function(response) {
                 if (response.success) {
-                    alert('✅ บันทึกการตั้งค่าสำเร็จ!\n\nกรุณา Refresh หน้าเพื่อใช้การตั้งค่าใหม่');
+                    alert('✅ บันทึกการตั้งค่าสำเร็จ!\n(Layout Settings Saved locally)');
                     $('#configModal').modal('hide');
                     location.reload();
                 } else {
@@ -518,6 +563,86 @@ $(document).ready(function() {
         });
     });
 });
+
+// --- PANEL CONFIG LOGIC ---
+const defaultPanelConfig = {
+    topPanels: [
+        {id: 'taskDashboardPanel', name: 'Task Dashboard Summary'},
+        {id: 'linkHubPanel', name: 'Resource Hub'}
+    ],
+    workflowPanels: [
+        {id: 'panelProjectInfo', name: 'Project & Version Info'},
+        {id: 'taskBoardPanel', name: 'Task Board'},
+        {id: 'panelGitFiles', name: 'Git Commits & Files'},
+        {id: 'panelDeployNotes', name: 'Deploy Notes'},
+        {id: 'panelDriveLinks', name: 'Google Drive Links'},
+        {id: 'historyPanel', name: 'Deploy History'}
+    ],
+    hidden: []
+};
+
+function loadPanelConfigIntoModal() {
+    let config = JSON.parse(localStorage.getItem('ada_deploy_layout') || 'null');
+    if (!config) config = defaultPanelConfig;
+
+    renderSortableList('#sortableTopPanels', config.topPanels || defaultPanelConfig.topPanels, config.hidden || []);
+    renderSortableList('#sortableWorkflowPanels', config.workflowPanels || defaultPanelConfig.workflowPanels, config.hidden || []);
+}
+
+function renderSortableList(selector, items, hiddenList) {
+    const list = $(selector);
+    list.empty();
+    items.forEach(item => {
+        // Check if ID actually exists in default (migration safety)
+        const defName = findPanelName(item.id); 
+        const name = defName || item.name;
+        
+        const isChecked = !hiddenList.includes(item.id);
+        
+        list.append(`
+            <li class="list-group-item d-flex align-items-center" data-id="${item.id}">
+                <span class="drag-handle mr-3 text-muted" style="cursor: move;"><i class="fas fa-grip-vertical"></i></span>
+                <div class="custom-control custom-checkbox flex-grow-1">
+                    <input type="checkbox" class="custom-control-input panel-vis-check" id="vis_${item.id}" ${isChecked ? 'checked' : ''}>
+                    <label class="custom-control-label" for="vis_${item.id}">${name}</label>
+                </div>
+            </li>
+        `);
+    });
+}
+
+function findPanelName(id) {
+    const all = [...defaultPanelConfig.topPanels, ...defaultPanelConfig.workflowPanels];
+    const found = all.find(p => p.id === id);
+    return found ? found.name : null;
+}
+
+function savePanelConfigFromModal() {
+    const topPanels = [];
+    $('#sortableTopPanels li').each(function() {
+        topPanels.push({id: $(this).data('id'), name: findPanelName($(this).data('id'))});
+    });
+
+    const workflowPanels = [];
+    $('#sortableWorkflowPanels li').each(function() {
+        workflowPanels.push({id: $(this).data('id'), name: findPanelName($(this).data('id'))});
+    });
+
+    const hidden = [];
+    $('.panel-vis-check:not(:checked)').each(function() {
+        hidden.push($(this).closest('li').data('id'));
+    });
+
+    const config = { topPanels, workflowPanels, hidden };
+    localStorage.setItem('ada_deploy_layout', JSON.stringify(config));
+}
+
+function resetPanelLayout() {
+    if(confirm('Restore default layout?')) {
+        localStorage.removeItem('ada_deploy_layout');
+        loadPanelConfigIntoModal();
+    }
+}
 </script>
 
 <style>
@@ -563,7 +688,28 @@ $(document).ready(function() {
     }
     to {
         opacity: 1;
-        transform: translateY(0);
+    transform: translateY(0);
     }
+}
+
+.panel-sortable-list .list-group-item {
+    padding: 10px 15px;
+    border: 1px solid #e9ecef;
+    margin-bottom: 5px;
+    border-radius: 4px;
+    background: #fff;
+    transition: background 0.2s;
+}
+
+.panel-sortable-list .list-group-item:hover {
+    background: #f8f9fa;
+}
+
+.ui-state-highlight {
+    height: 45px;
+    background: #f0f9ff;
+    border: 1px dashed #007bff;
+    margin-bottom: 5px;
+    border-radius: 4px;
 }
 </style>

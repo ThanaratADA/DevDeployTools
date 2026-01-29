@@ -2233,6 +2233,32 @@ select.form-control-custom {
     box-shadow: var(--shadow-sm);
 }
 
+/* Sortable Smoothness Enhancements */
+.ui-sortable-placeholder {
+    visibility: visible !important;
+    background: rgba(0, 143, 102, 0.05) !important;
+    border: 2px dashed var(--primary-color) !important;
+    border-radius: 10px;
+    margin-bottom: 10px;
+}
+
+.ui-sortable-helper {
+    transform: scale(1.05) rotate(2deg) !important;
+    box-shadow: var(--shadow-xl) !important;
+    cursor: grabbing !important;
+    transition: none !important;
+    /* Force no transition on helper */
+}
+
+/* Disable hover effect and transition during sorting to avoid jitter */
+.is-sorting-list .link-item-modern {
+    transition: none !important;
+}
+
+.is-sorting-list .link-item-modern:hover {
+    transform: none !important;
+}
+
 .link-item-info {
     flex: 1;
     min-width: 0;

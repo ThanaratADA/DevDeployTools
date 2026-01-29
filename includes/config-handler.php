@@ -10,53 +10,27 @@ class ConfigHandler {
     
     public function __construct($configFile = 'deploy_config.json') {
         $this->configFile = $configFile;
-        $this->defaultConfig = [
-            'sourcePath' => 'D:\\WebServer\\Apache24\\htdocs\\',
-            'destinationPath' => 'D:\\PackFile_Deploy\\',
-            'projects' => [
-                'AdaPos5.0-Retail' => 'AdaPos5.0-Retail',
-                'AdaStoreBack' => 'AdaStoreBack',
-                'AdaHQ' => 'AdaHQ'
-            ],
-            'projectMiddleFolders' => [
-                'AdaPos5.0-Retail' => 'AdaStoreBack',
-                'AdaStoreBack' => 'AdaStoreBack',
-                'AdaHQ' => 'AdaStoreBack'
-            ],
-            'projectDestinationNames' => [
-                'AdaPos5.0-Retail' => 'StoreBack ( Web Application )',
-                'AdaStoreBack' => 'StoreBack ( Web Application )',
-                'AdaHQ' => 'StoreBack ( Web Application )'
-            ],
-            'googleDrivePaths' => [
-                'AdaPos5.0-Retail' => [
-                    'xPatch' => '',
-                    'xUpgrade' => '',
-                    'unitTest' => '',
-                    'versionHistory' => '',
-                    'lastVersion' => ''
-                ],
-                'AdaStoreBack' => [
-                    'xPatch' => '',
-                    'xUpgrade' => '',
-                    'unitTest' => '',
-                    'versionHistory' => '',
-                    'lastVersion' => ''
-                ],
-                'AdaHQ' => [
-                    'xPatch' => '',
-                    'xUpgrade' => '',
-                    'unitTest' => '',
-                    'versionHistory' => '',
-                    'lastVersion' => ''
-                ]
-            ],
-            'readmeTemplates' => [
-                'AdaPos5.0-Retail' => "Deploy {PROJECT}\n{PROJECT} {VERSION}\n\nปัญหา\n{PROBLEMS}\n\nแก้ไข\n{SOLUTIONS}\n\nConfig\n{CONFIG}\n\nRemark\n{REMARKS}\n\nX-Patch: {X_PATCH}\nX-Upgrade: {X_UPGRADE}\nX-Upgrade (Database): {X_DATABASE}\nImpact: {IMPACT}\nUnit Test: {UNIT_TEST}\nVersion History: {VERSION_HISTORY}\nLast Version: {LAST_VERSION}",
-                'AdaStoreBack' => "Deploy {PROJECT}\n{PROJECT} {VERSION}\n\nปัญหา\n{PROBLEMS}\n\nแก้ไข\n{SOLUTIONS}\n\nConfig\n{CONFIG}\n\nRemark\n{REMARKS}\n\nX-Patch: {X_PATCH}\nX-Upgrade: {X_UPGRADE}\nX-Upgrade (Database): {X_DATABASE}\nImpact: {IMPACT}\nUnit Test: {UNIT_TEST}\nVersion History: {VERSION_HISTORY}\nLast Version: {LAST_VERSION}",
-                'AdaHQ' => "Deploy {PROJECT}\n{PROJECT} {VERSION}\n\nปัญหา\n{PROBLEMS}\n\nแก้ไข\n{SOLUTIONS}\n\nConfig\n{CONFIG}\n\nRemark\n{REMARKS}\n\nX-Patch: {X_PATCH}\nX-Upgrade: {X_UPGRADE}\nX-Upgrade (Database): {X_DATABASE}\nImpact: {IMPACT}\nUnit Test: {UNIT_TEST}\nVersion History: {VERSION_HISTORY}\nLast Version: {LAST_VERSION}"
-            ]
-        ];
+        
+        // NEW: Load initial config from deploy_config.json
+        // D:\WebServer\Apache24\htdocs\DeploysV1\DevSecTools\deploy_config.json
+        $masterConfigPath = 'D:\\WebServer\\Apache24\\htdocs\\DeploysV1\\DevSecTools\\deploy_config.json';
+        
+        if (file_exists($masterConfigPath)) {
+            $this->defaultConfig = json_decode(file_get_contents($masterConfigPath), true);
+        } elseif (file_exists($this->configFile)) {
+            $this->defaultConfig = json_decode(file_get_contents($this->configFile), true);
+        } else {
+            // Fallback: minimal default structure if file not found
+            $this->defaultConfig = [
+                'sourcePath' => 'D:\\WebServer\\Apache24\\htdocs\\',
+                'destinationPath' => 'D:\\PackFile_Deploy\\',
+                'projects' => [],
+                'projectMiddleFolders' => [],
+                'projectDestinationNames' => [],
+                'googleDrivePaths' => [],
+                'readmeTemplates' => []
+            ];
+        }
     }
     
     public function loadConfig() {
